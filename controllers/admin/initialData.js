@@ -5,6 +5,7 @@ const Order = require("../../models/order");
 function createCategories(categories, parentId = null) {
   const categoryList = [];
   let category;
+
   if (parentId == null) {
     category = categories.filter((cat) => cat.parentId == undefined);
   } else {
@@ -17,6 +18,7 @@ function createCategories(categories, parentId = null) {
       name: cate.name,
       slug: cate.slug,
       parentId: cate.parentId,
+      keyword: cate.keyword,
       type: cate.type,
       children: createCategories(categories, cate._id),
     });
@@ -28,7 +30,9 @@ function createCategories(categories, parentId = null) {
 exports.initialData = async (req, res) => {
   const categories = await Category.find({}).exec();
   const products = await Product.find({ createdBy: req.user._id })
-    .select("_id name price quantity slug description productPictures category pincode halfkgprice onekgprice twokgprice tags")
+    .select(
+      "_id name price quantity slug description productPictures category pincode halfkgprice onekgprice twokgprice tags"
+    )
     .populate({ path: "category", select: "_id name" })
     .exec();
   const orders = await Order.find({})

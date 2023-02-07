@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const shortid = require("shortid");
 const sendEmail = require("../utils/email/sendEmail");
+const otpGenerator = require("otp-generator");
 
 const crypto = require("crypto");
 
@@ -11,6 +12,94 @@ const generateJwtToken = (_id, role) => {
   return jwt.sign({ _id, role }, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
+};
+
+exports.requestVerifyEmail = async (req, res) => {
+  const user = await User.findOne({ email: req.body.email });
+  req.app.locals.OTP = await otpGenerator.generate(6, {
+    lowerCaseAlphabets: false,
+    upperCaseAlphabets: false,
+    specialChars: false,
+  });
+  if (!user) throw new Error("Email does not exist");
+
+  const link = `${process.env.CLIENT_URL}/verifyemail?otp=${req.app.locals.OTP}&id=${user._id}`;
+
+  sendEmail(
+    user.email,
+    "Request Verify Email",
+    {
+      name: user.fullName,
+      otp: req.app.locals.OTP,
+      link: link,
+    },
+    "./template/requestVerifyEmail.handlebars"
+  );
+
+  return res.status(201).json({
+    link,
+  });
+};
+
+exports.verifyEmailViaOtp = async (req, res) => {
+  const { otp, id } = req.body;
+  console.log(otp,parseInt(req.app.locals.OTP))
+  if (parseInt(req.app.locals.OTP) === parseInt(otp)) {
+    req.app.locals.OTP = null; // reset the otp
+
+    await User.updateOne(
+      { _id: id },
+      { $set: { verified: true } },
+      { new: true }
+    );
+
+    const user = await User.findById({ _id: id });
+
+    sendEmail(
+      user.email,
+      "Email Verified",
+      {
+        name: user.fullName,
+      },
+      "./template/verifyEmail.handlebars"
+    );
+
+    req.app.locals.resetSession = true; // start session for reset password
+
+    return res.status(201).json({
+      message: "Email was verify successful",
+      user: user,
+    });
+  }
+  return res.status(400).send({ error: "Invalid OTP" });
+};
+
+exports.generateOTP = async (req, res) => {
+  req.app.locals.OTP = await otpGenerator.generate(6, {
+    lowerCaseAlphabets: false,
+    upperCaseAlphabets: false,
+    specialChars: false,
+  });
+  res.status(201).send({ code: req.app.locals.OTP });
+};
+
+exports.verifyOTP = async (req, res) => {
+  const { otp } = req.body;
+  if (parseInt(req.app.locals.OTP) === parseInt(otp)) {
+    req.app.locals.OTP = null; // reset the otp
+    req.app.locals.resetSession = true; // start session for reset password
+    User.updateOne({ _id: req.body.id }, { $set: { verified: true } });
+    return res.status(201).send({ msg: "Verify Successfullt !" });
+  }
+  return res.status(400).send({ error: "Invalid OTP" });
+};
+
+exports.createResetSession = async (req, res) => {
+  if (req.app.locals.resetSession) {
+    req.app.locals.resetSession = false; // start session for reset password
+    return res.status(201).send({ msg: "access granted !" });
+  }
+  return res.status(440).send({ error: "Session expired !" });
 };
 
 exports.signup = (req, res) => {
@@ -38,6 +127,7 @@ exports.signup = (req, res) => {
       }
 
       if (user) {
+        requestVerifyEmail(email);
         const token = generateJwtToken(user._id, user.role);
         const { _id, firstName, lastName, email, role, fullName } = user;
         return res.status(201).json({
@@ -178,7 +268,7 @@ exports.forgotPassword = async (req, res) => {
 };
 
 exports.requestPasswordReset = async (req, res) => {
-//  console.log("mail", req.body.email);
+  //  console.log("mail", req.body.email);
 
   const { email } = req.body;
 
@@ -190,14 +280,11 @@ exports.requestPasswordReset = async (req, res) => {
 
   if (token) await token.deleteOne();
 
-
   let resetToken = crypto.randomBytes(32).toString("hex");
 
-  
   const salt = await bcrypt.genSalt(10);
 
   const hash = await bcrypt.hash(resetToken, salt);
-
 
   await new Token({
     userId: user._id,
@@ -220,13 +307,12 @@ exports.requestPasswordReset = async (req, res) => {
   return res.status(201).json({
     link,
   });
-
 };
 
 exports.resetPassword = async (req, res) => {
-const {userId, token, password} = req.body;
+  const { userId, token, password } = req.body;
   let passwordResetToken = await Token.findOne({ userId });
-  
+
   if (!passwordResetToken) {
     throw new Error("Invalid or expired password reset token");
   }
@@ -264,7 +350,7 @@ const {userId, token, password} = req.body;
 
   return res.status(201).json({
     message: "Password reset was successful",
-    user:user
+    user: user,
   });
 };
 

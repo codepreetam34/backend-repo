@@ -11,6 +11,9 @@ const categorySchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    keyword : {
+      type:String,
+    },
     type: {
       type: String,
     },
@@ -23,6 +26,10 @@ const categorySchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
+
+
+
   },
   { timestamps: true }
 );
