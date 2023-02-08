@@ -43,7 +43,7 @@ exports.requestVerifyEmail = async (req, res) => {
 
 exports.verifyEmailViaOtp = async (req, res) => {
   const { otp, id } = req.body;
-  console.log(otp,parseInt(req.app.locals.OTP))
+  console.log(otp, parseInt(req.app.locals.OTP));
   if (parseInt(req.app.locals.OTP) === parseInt(otp)) {
     req.app.locals.OTP = null; // reset the otp
 
@@ -293,7 +293,7 @@ exports.requestPasswordReset = async (req, res) => {
   }).save();
 
   const link = `${process.env.CLIENT_URL}/passwordReset?token=${resetToken}&id=${user._id}`;
-
+  console.log(link);
   sendEmail(
     user.email,
     "Password Reset Request",

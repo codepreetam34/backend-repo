@@ -7,19 +7,17 @@ const {
 } = require("../common-middleware");
 
 const {
-  createProduct,
-  getProductsBySlug,
-  getProductDetailsById,
-  deleteProductById,
-  getProducts,
-} = require("../controllers/product");
+  createBanner,
+  getBannerById,
+  getBannersBySlug,
+  deleteBannerById,
+  getBanners,
+} = require("../controllers/homepageBanner");
+
 const multer = require("multer");
 const shortid = require("shortid");
 const path = require("path");
 const router = express.Router();
-const { isRequestValidated } = require('../validators/auth');
-
-//const upload = multer({dest: 'uploads/'});
 
 const storage = multer.diskStorage({
   destination: function (req, file, callback) {
@@ -32,28 +30,28 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 router.post(
-  "/product/create",
+  "/banner/create",
   requireSignin,
   adminMiddleware,
   // uploadS3.array("productPicture"),
-  upload.array('productPicture'),
-  createProduct
+  upload.array('banner'),
+  createBanner
 );
 
-router.get("/products/:slug", getProductsBySlug);
-//router.get('/category/getcategory', getCategories);
-router.get("/product/:productId", getProductDetailsById);
+router.get("/banner/:id", getBannerById);
+router.get("/banners/:slug", getBannersBySlug);
 router.delete(
-  "/product/deleteProductById",
+  "/banner/deleteBannerById",
   requireSignin,
   adminMiddleware,
-  deleteProductById
+  deleteBannerById
  );
 router.post(
-  "/product/getProducts",
+  "/banner/getBanners",
   requireSignin,
   adminMiddleware,
-  getProducts
+  getBanners
 );
 
 module.exports = router;
+
