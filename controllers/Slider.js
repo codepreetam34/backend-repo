@@ -1,4 +1,4 @@
-const Slider = require("../models/imageSlider");
+const Slider = require("../models/Slider");
 const shortid = require("shortid");
 const slugify = require("slugify");
 

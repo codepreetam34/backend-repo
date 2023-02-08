@@ -15,7 +15,7 @@ const productRoutes = require("./routes/product");
 const cartRoutes = require("./routes/cart");
 const homepageBannerRoutes = require('./routes/homepageBanner')
 
-const imageSlider = require("./routes/imageSlider");
+const Slider = require("./routes/Slider");
 
 const initialDataRoutes = require('./routes/admin/initialData')
 
@@ -74,7 +74,7 @@ app.use("/api", adminOrderRoute);
 
 app.use("/api", homepageBannerRoutes);
 
-app.use("/api", imageSlider);
+app.use("/api", Slider);
 
 
 

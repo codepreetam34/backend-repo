@@ -12,7 +12,7 @@ const {
   getSlidersBySlug,
   deleteSliderById,
   getSliders,
-} = require("../controllers/imageSlider");
+} = require("../controllers/Slider");
 
 const multer = require("multer");
 const shortid = require("shortid");
