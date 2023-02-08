@@ -3,8 +3,9 @@ const shortid = require("shortid");
 const slugify = require("slugify");
 
 exports.createBanner = (req, res) => {
-  const { title, createdBy } = req.body;
+  const { title, type, createdBy } = req.body;
   let banners = [];
+  
   if (req.files.length > 0) {
     banners = req.files.map((file) => {
       return { img: process.env.API + "/public/" + file.filename };
@@ -13,6 +14,7 @@ exports.createBanner = (req, res) => {
 
   const banner = new Banner({
     title: title,
+    type: type,
     slug: slugify(title),
     banners,
     createdBy: req.user._id,
@@ -29,7 +31,7 @@ exports.getBannersBySlug = (req, res) => {
   const { slug } = req.params;
   //console.log(slug)
   Banner.findOne({ slug: slug })
-    .select("_id banners title slug")
+    .select("_id banners title slug type")
     .exec((error, banner) => {
       if (error) {
         return res.status(400).json({ error });
