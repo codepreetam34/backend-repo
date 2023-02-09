@@ -74,25 +74,6 @@ exports.verifyEmailViaOtp = async (req, res) => {
   return res.status(400).send({ error: "Invalid OTP" });
 };
 
-exports.generateOTP = async (req, res) => {
-  req.app.locals.OTP = await otpGenerator.generate(6, {
-    lowerCaseAlphabets: false,
-    upperCaseAlphabets: false,
-    specialChars: false,
-  });
-  res.status(201).send({ code: req.app.locals.OTP });
-};
-
-exports.verifyOTP = async (req, res) => {
-  const { otp } = req.body;
-  if (parseInt(req.app.locals.OTP) === parseInt(otp)) {
-    req.app.locals.OTP = null; // reset the otp
-    req.app.locals.resetSession = true; // start session for reset password
-    User.updateOne({ _id: req.body.id }, { $set: { verified: true } });
-    return res.status(201).send({ msg: "Verify Successfullt !" });
-  }
-  return res.status(400).send({ error: "Invalid OTP" });
-};
 
 exports.createResetSession = async (req, res) => {
   if (req.app.locals.resetSession) {
@@ -210,6 +191,7 @@ exports.signin = (req, res) => {
     }
   });
 };
+
 
 exports.updateProfile = async (req, res) => {
   const {
@@ -380,4 +362,25 @@ exports.signout = (req, res) => {
   res.status(200).json({
     message: "Signout successfully...!",
   });
+};
+
+
+exports.generateOTP = async (req, res) => {
+  req.app.locals.OTP = await otpGenerator.generate(6, {
+    lowerCaseAlphabets: false,
+    upperCaseAlphabets: false,
+    specialChars: false,
+  });
+  res.status(201).send({ code: req.app.locals.OTP });
+};
+
+exports.verifyOTP = async (req, res) => {
+  const { otp } = req.body;
+  if (parseInt(req.app.locals.OTP) === parseInt(otp)) {
+    req.app.locals.OTP = null; // reset the otp
+    req.app.locals.resetSession = true; // start session for reset password
+    User.updateOne({ _id: req.body.id }, { $set: { verified: true } });
+    return res.status(201).send({ msg: "Verify Successfullt !" });
+  }
+  return res.status(400).send({ error: "Invalid OTP" });
 };
