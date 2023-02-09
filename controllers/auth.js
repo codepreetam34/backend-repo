@@ -135,6 +135,7 @@ exports.signup = (req, res) => {
         return res.status(201).json({
           token,
           user: { _id, firstName, lastName, contactNumber, email, role, fullName },
+          message: "Email Verification Sent",
         });
       }
     });
