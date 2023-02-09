@@ -109,11 +109,13 @@ exports.signup = (req, res) => {
         error: "User already registered",
       });
 
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, contactNumber } = req.body;
+
     const hash_password = await bcrypt.hash(password, 10);
     const _user = new User({
       firstName,
       lastName,
+      contactNumber,
       email,
       hash_password,
       username: shortid.generate(),
@@ -127,12 +129,31 @@ exports.signup = (req, res) => {
       }
 
       if (user) {
-        requestVerifyEmail(email);
+        req.app.locals.OTP = otpGenerator.generate(6, {
+          lowerCaseAlphabets: false,
+          upperCaseAlphabets: false,
+          specialChars: false,
+        });
+        if (!user) throw new Error("Email does not exist");
+      
+        const link = `${process.env.CLIENT_URL}/verifyemail?otp=${req.app.locals.OTP}&id=${user._id}`;
+      
+        sendEmail(
+          user.email,
+          "Request Verify Email",
+          {
+            name: user.fullName,
+            otp: req.app.locals.OTP,
+            link: link,
+          },
+          "./template/requestVerifyEmail.handlebars"
+        );
+      
         const token = generateJwtToken(user._id, user.role);
-        const { _id, firstName, lastName, email, role, fullName } = user;
+        const { _id, firstName, lastName, email,contactNumber, role, fullName } = user;
         return res.status(201).json({
           token,
-          user: { _id, firstName, lastName, email, role, fullName },
+          user: { _id, firstName, lastName, contactNumber, email, role, fullName },
         });
       }
     });
