@@ -43,7 +43,7 @@ exports.requestVerifyEmail = async (req, res) => {
 
 exports.verifyEmailViaOtp = async (req, res) => {
   const { otp, id } = req.body;
-  console.log(otp,parseInt(req.app.locals.OTP))
+  console.log(otp, parseInt(req.app.locals.OTP));
   if (parseInt(req.app.locals.OTP) === parseInt(otp)) {
     req.app.locals.OTP = null; // reset the otp
 
@@ -74,25 +74,6 @@ exports.verifyEmailViaOtp = async (req, res) => {
   return res.status(400).send({ error: "Invalid OTP" });
 };
 
-exports.generateOTP = async (req, res) => {
-  req.app.locals.OTP = await otpGenerator.generate(6, {
-    lowerCaseAlphabets: false,
-    upperCaseAlphabets: false,
-    specialChars: false,
-  });
-  res.status(201).send({ code: req.app.locals.OTP });
-};
-
-exports.verifyOTP = async (req, res) => {
-  const { otp } = req.body;
-  if (parseInt(req.app.locals.OTP) === parseInt(otp)) {
-    req.app.locals.OTP = null; // reset the otp
-    req.app.locals.resetSession = true; // start session for reset password
-    User.updateOne({ _id: req.body.id }, { $set: { verified: true } });
-    return res.status(201).send({ msg: "Verify Successfullt !" });
-  }
-  return res.status(400).send({ error: "Invalid OTP" });
-};
 
 exports.createResetSession = async (req, res) => {
   if (req.app.locals.resetSession) {
@@ -109,11 +90,13 @@ exports.signup = (req, res) => {
         error: "User already registered",
       });
 
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, contactNumber } = req.body;
+
     const hash_password = await bcrypt.hash(password, 10);
     const _user = new User({
       firstName,
       lastName,
+      contactNumber,
       email,
       hash_password,
       username: shortid.generate(),
@@ -127,12 +110,32 @@ exports.signup = (req, res) => {
       }
 
       if (user) {
-        requestVerifyEmail(email);
+        req.app.locals.OTP = otpGenerator.generate(6, {
+          lowerCaseAlphabets: false,
+          upperCaseAlphabets: false,
+          specialChars: false,
+        });
+        if (!user) throw new Error("Email does not exist");
+      
+        const link = `${process.env.CLIENT_URL}/verifyemail?otp=${req.app.locals.OTP}&id=${user._id}`;
+      
+        sendEmail(
+          user.email,
+          "Request Verify Email",
+          {
+            name: user.fullName,
+            otp: req.app.locals.OTP,
+            link: link,
+          },
+          "./template/requestVerifyEmail.handlebars"
+        );
+      
         const token = generateJwtToken(user._id, user.role);
-        const { _id, firstName, lastName, email, role, fullName } = user;
+        const { _id, firstName, lastName, email,contactNumber, role, fullName } = user;
         return res.status(201).json({
           token,
-          user: { _id, firstName, lastName, email, role, fullName },
+          user: { _id, firstName, lastName, contactNumber, email, role, fullName },
+          message: "Email Verification Sent",
         });
       }
     });
@@ -189,6 +192,7 @@ exports.signin = (req, res) => {
     }
   });
 };
+
 
 exports.updateProfile = async (req, res) => {
   const {
@@ -293,7 +297,7 @@ exports.requestPasswordReset = async (req, res) => {
   }).save();
 
   const link = `${process.env.CLIENT_URL}/passwordReset?token=${resetToken}&id=${user._id}`;
-
+  console.log(link);
   sendEmail(
     user.email,
     "Password Reset Request",
@@ -359,4 +363,25 @@ exports.signout = (req, res) => {
   res.status(200).json({
     message: "Signout successfully...!",
   });
+};
+
+
+exports.generateOTP = async (req, res) => {
+  req.app.locals.OTP = await otpGenerator.generate(6, {
+    lowerCaseAlphabets: false,
+    upperCaseAlphabets: false,
+    specialChars: false,
+  });
+  res.status(201).send({ code: req.app.locals.OTP });
+};
+
+exports.verifyOTP = async (req, res) => {
+  const { otp } = req.body;
+  if (parseInt(req.app.locals.OTP) === parseInt(otp)) {
+    req.app.locals.OTP = null; // reset the otp
+    req.app.locals.resetSession = true; // start session for reset password
+    User.updateOne({ _id: req.body.id }, { $set: { verified: true } });
+    return res.status(201).send({ msg: "Verify Successfullt !" });
+  }
+  return res.status(400).send({ error: "Invalid OTP" });
 };

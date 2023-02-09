@@ -57,19 +57,3 @@ const productSchema = new mongoose.Schema(
 
 module.exports = mongoose.model("Product", productSchema);
 
-// const mongoose = require("mongoose");
-
-// const productSchema = new mongoose.Schema(
-//     {
-//         title:{type: String, required:true,unique:true},
-//         desc:{type:String, required:true},
-//         variantList:{type:Object,default:[]},
-//         pinCode:{type:Array},
-//         img:{type: Array,required:true},
-//         SKU:{type: String,required:true},
-//         isAdmin:{
-//             type:Boolean, default:false,
-//         },
-//     },{timestamps: true});
-
-//     module.exports = mongoose.model('Product',productSchema)
