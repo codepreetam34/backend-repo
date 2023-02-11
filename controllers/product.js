@@ -23,7 +23,7 @@ exports.createProduct = (req, res) => {
   //    return { weight: cake.weight, price: cake.price };
   //  });
 
-  if (category == "63ce61bfffc84f22343b72fc") {
+  if (category == "63e7408c4d118f475c8542c2") {
     const product = new Product({
       name: name,
       slug: slugify(name),

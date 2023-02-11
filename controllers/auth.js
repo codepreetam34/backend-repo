@@ -67,7 +67,7 @@ exports.verifyEmailViaOtp = async (req, res) => {
     req.app.locals.resetSession = true; // start session for reset password
 
     return res.status(201).json({
-      message: "Email was verify successful",
+      message: "Email verified successfully",
       user: user,
     });
   }
