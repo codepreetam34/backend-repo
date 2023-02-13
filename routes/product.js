@@ -49,10 +49,9 @@ router.delete(
   adminMiddleware,
   deleteProductById
  );
-router.post(
+router.get(
   "/product/getProducts",
   requireSignin,
-  adminMiddleware,
   getProducts
 );
 
