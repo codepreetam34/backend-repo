@@ -51,7 +51,6 @@ router.delete(
  );
 router.get(
   "/product/getProducts",
-  requireSignin,
   getProducts
 );
 
