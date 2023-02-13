@@ -2,7 +2,7 @@ const Category = require("../../models/category");
 const Product = require("../../models/product");
 const Order = require("../../models/order");
 const HomepageBanner = require("../../models/homepageBanner");
-
+const Slider = require("../../models/Slider");
 
 function createCategories(categories, parentId = null) {
   const categoryList = [];
@@ -46,11 +46,15 @@ exports.initialData = async (req, res) => {
   
     const homepageBanner = await HomepageBanner.find({}) 
   
+      
+    const slider = await Slider.find({}) 
+  
     res.status(200).json({
     categories: createCategories(categories),
     products,
     orders,
     homepageBanner,
+    slider,
   });
 
 

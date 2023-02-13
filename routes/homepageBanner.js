@@ -39,13 +39,16 @@ router.post(
 );
 
 router.get("/banner/:id", getBannerById);
+
 router.get("/banners/:slug", getBannersBySlug);
+
 router.delete(
   "/banner/deleteBannerById",
   requireSignin,
   adminMiddleware,
   deleteBannerById
  );
+
 router.post(
   "/banner/getBanners",
   requireSignin,
