@@ -49,7 +49,7 @@ router.delete(
   adminMiddleware,
   deleteProductById
  );
-router.get(
+router.post(
   "/product/getProducts",
   getProducts
 );

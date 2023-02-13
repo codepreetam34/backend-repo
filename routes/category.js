@@ -8,9 +8,8 @@ const {
 const {
   requireSignin,
   adminMiddleware,
-//  superAdminMiddleware,
+  //  superAdminMiddleware,
 } = require("../common-middleware");
-
 
 const router = express.Router();
 const shortid = require("shortid");
@@ -31,7 +30,7 @@ const upload = multer({ storage });
 router.post(
   "/category/create",
   requireSignin,
-    adminMiddleware,
+  adminMiddleware,
   upload.single("categoryImage"),
   addCategory
 );
