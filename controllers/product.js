@@ -15,14 +15,15 @@ exports.createProduct = (req, res) => {
     tags,
     actualPrice,
     discountPrice,
-    reviews,
-    ratings,
+
     deliveryDay,
     offer,
+
     createdBy,
   } = req.body;
 
   let productPictures = [];
+
   //let cakeDetails = [];
 
   if (req.files.length > 0) {
@@ -31,9 +32,6 @@ exports.createProduct = (req, res) => {
     });
   }
 
-  // cakeDetails = req.cakeDetails.map((cake) => {
-  //    return { weight: cake.weight, price: cake.price };
-  // //  });
 
   if (category == "63e7408c4d118f475c8542c2") {
     const product = new Product({
@@ -50,8 +48,7 @@ exports.createProduct = (req, res) => {
       category,
       offer,
       discountPrice,
-      reviews,
-      ratings,
+
       deliveryDay,
 
       halfkgprice: req.body.halfkgprice ? req.body.halfkgprice : "",
@@ -76,8 +73,7 @@ exports.createProduct = (req, res) => {
       pincode,
 
       discountPrice,
-      reviews,
-      ratings,
+
       deliveryDay,
       offer,
       productPictures,
@@ -183,13 +179,14 @@ function createProducts(products) {
       quantity: prod.quantity,
       description: prod.description,
       productPictures: prod.productPictures,
-
       actualPrice: prod.actualPrice,
       discountPrice: prod.discountPrice,
-      reviews: prod.reviews,
-      ratings: prod.ratings,
-      deliveryDay: prod.deliveryDay,
 
+      reviews: prod.reviews,
+      rating: prod.rating,
+      numReviews: prod.numReviews,
+
+      deliveryDay: prod.deliveryDay,
       category: prod.category,
       halfkgprice: prod.halfkgprice,
       onekgprice: prod.onekgprice,
@@ -207,4 +204,50 @@ exports.getProducts = (req, res) => {
       res.status(200).json({ products });
     }
   });
+};
+
+exports.createProductReview = async (req, res) => {
+  const { rating, comment, name } = req.body;
+ 
+  if (!name) {
+    return res.status(400).json({ error: "name is required" });
+  }
+  if (!rating) {
+    return res.status(400).json({ error: "rating is required" });
+  }
+  if (!comment) {
+    return res.status(400).json({ error: "comment is required" });
+  }
+
+  const product = await Product.findById(req.params.id);
+ 
+  if (product) {
+    const alreadyReviewed = product.reviews.find((r) => {
+      return r.user.toString() === req.user._id.toString();
+    });
+
+    if (alreadyReviewed) {
+      return res.status(400).json({ error: "Product already reviewed" });
+    }
+
+    const review = {
+      name: name,
+      rating: Number(rating),
+      comment,
+      user: req.user._id,
+    };
+
+    product.reviews.push(review);
+
+    product.numReviews = product.reviews.length;
+
+    product.rating =
+      product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+      product.reviews.length;
+
+    await product.save();
+    res.status(201).json({ message: "Review added" });
+  } else {
+    res.status(404).json({ message: "Product not found" });
+  }
 };

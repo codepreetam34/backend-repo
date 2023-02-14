@@ -4,6 +4,7 @@ const slugify = require("slugify");
 
 exports.createSlider = (req, res) => {
   const { title, createdBy } = req.body;
+  
   let sliders = [];
   
   if (req.files.length > 0) {
