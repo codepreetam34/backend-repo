@@ -184,7 +184,7 @@ exports.signin = (req, res) => {
         });
       } else {
         return res.status(400).json({
-          message: "User not found",
+          message: "Your username/password is invalid. Please try again.",
         });
       }
     } else {
