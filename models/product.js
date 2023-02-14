@@ -12,16 +12,21 @@ const productSchema = new mongoose.Schema(
       unique: true,
     },
     pincode: { type: Array, required: true },
-
-    tags: { type: Array},
+    deliveryDay: { type: String },
+    tags: { type: Array },
 
     halfkgprice: { type: String },
     onekgprice: { type: String },
     twokgprice: { type: String },
 
-    price: {
+    actualPrice: {
       type: Number,
     },
+    discountPrice: {
+      type: Number,
+    },
+    ratings: { type: String },
+
     quantity: {
       type: Number,
       required: true,
@@ -33,12 +38,15 @@ const productSchema = new mongoose.Schema(
     },
     offer: { type: Number },
     productPictures: [{ img: { type: String } }],
-    reviews: [
-      {
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        review: String,
-      },
-    ],
+   
+   reviews: {type: String},
+    // reviews: [
+    //   {
+    //     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    //     review: String,
+    //   },
+    // ],
+
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
@@ -56,4 +64,3 @@ const productSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("Product", productSchema);
-

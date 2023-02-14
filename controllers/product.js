@@ -6,8 +6,21 @@ const Category = require("../models/category");
 exports.createProduct = (req, res) => {
   //res.status(200).json( { file: req.files, body: req.body } );
 
-  const { name, description, category, quantity, pincode, tags, createdBy } =
-    req.body;
+  const {
+    name,
+    description,
+    category,
+    quantity,
+    pincode,
+    tags,
+    actualPrice,
+    discountPrice,
+    reviews,
+    ratings,
+    deliveryDay,
+    offer,
+    createdBy,
+  } = req.body;
 
   let productPictures = [];
   //let cakeDetails = [];
@@ -22,50 +35,63 @@ exports.createProduct = (req, res) => {
   //    return { weight: cake.weight, price: cake.price };
   // //  });
 
-  // if (category == "63e7408c4d118f475c8542c2") {
-  //   const product = new Product({
-  //     name: name,
-  //     slug: slugify(name),
-  //     price: req.body.price ? req.body.price : req.body.halfkgprice,
-  //     quantity,
-  //     description,
-  //     pincode,
-  //     productPictures,
-  //     category,
-  //     halfkgprice: req.body.halfkgprice,
-  //     onekgprice: req.body.onekgprice,
-  //     twokgprice: req.body.twokgprice,
-  //     tags,
-  //     createdBy: req.user._id,
-  //   });
-  //   product.save((error, product) => {
-  //     if (error) return res.status(400).json({ error });
-  //     if (product) {
-  //       res.status(201).json({ product, files: req.files });
-  //     }
-  //   });
-  // } else {
-  const product = new Product({
-    name: name,
-    slug: slugify(name),
-    price: req.body.price || req.body.halfkgprice ? req.body.price : req.body.halfkgprice,
-    quantity,
-    description,
-    pincode,
-    productPictures,
-    category,
-    halfkgprice: req.body.halfkgprice ? req.body.halfkgprice : "",
-    onekgprice: req.body.onekgprice ? req.body.onekgprice : "",
-    twokgprice: req.body.twokgprice ? req.body.twokgprice : "",
-    tags,
-    createdBy: req.user._id,
-  });
-  product.save((error, product) => {
-    if (error) return res.status(400).json({ error });
-    if (product) {
-      res.status(201).json({ product, files: req.files });
-    }
-  });
+  if (category == "63e7408c4d118f475c8542c2") {
+    const product = new Product({
+      name: name,
+      slug: slugify(name),
+      actualPrice:
+        actualPrice || req.body.halfkgprice
+          ? actualPrice
+          : req.body.halfkgprice,
+      quantity,
+      description,
+      pincode,
+      productPictures,
+      category,
+      offer,
+      discountPrice,
+      reviews,
+      ratings,
+      deliveryDay,
+
+      halfkgprice: req.body.halfkgprice ? req.body.halfkgprice : "",
+      onekgprice: req.body.onekgprice ? req.body.onekgprice : "",
+      twokgprice: req.body.twokgprice ? req.body.twokgprice : "",
+      tags,
+      createdBy: req.user._id,
+    });
+    product.save((error, product) => {
+      if (error) return res.status(400).json({ error });
+      if (product) {
+        res.status(201).json({ product, files: req.files });
+      }
+    });
+  } else {
+    const product = new Product({
+      name: name,
+      slug: slugify(name),
+      actualPrice,
+      quantity,
+      description,
+      pincode,
+
+      discountPrice,
+      reviews,
+      ratings,
+      deliveryDay,
+      offer,
+      productPictures,
+      category,
+      tags,
+      createdBy: req.user._id,
+    });
+    product.save((error, product) => {
+      if (error) return res.status(400).json({ error });
+      if (product) {
+        res.status(201).json({ product, files: req.files });
+      }
+    });
+  }
 };
 
 exports.getProductsBySlug = (req, res) => {
@@ -145,31 +171,35 @@ exports.deleteProductById = (req, res) => {
   }
 };
 
-
 function createProducts(products) {
   const productList = [];
 
   for (let prod of products) {
     productList.push({
       _id: prod._id,
-      pincode : prod.pincode,
+      pincode: prod.pincode,
       tags: prod.tags,
       name: prod.name,
-      quantity : prod.quantity,
-      description : prod.description,
-      productPictures : prod.productPictures,
-      category:prod.category,
-      halfkgprice : prod.halfkgprice,
-      onekgprice : prod.onekgprice,
-      twokgprice : prod.twokgprice,
+      quantity: prod.quantity,
+      description: prod.description,
+      productPictures: prod.productPictures,
+
+      actualPrice: prod.actualPrice,
+      discountPrice: prod.discountPrice,
+      reviews: prod.reviews,
+      ratings: prod.ratings,
+      deliveryDay: prod.deliveryDay,
+
+      category: prod.category,
+      halfkgprice: prod.halfkgprice,
+      onekgprice: prod.onekgprice,
+      twokgprice: prod.twokgprice,
     });
   }
 
   return productList;
 }
 exports.getProducts = (req, res) => {
-  console.log("products = ", Product.find({}));
-
   Product.find({}).exec((error, product) => {
     if (error) return res.status(400).json({ error });
     if (product) {
@@ -177,5 +207,4 @@ exports.getProducts = (req, res) => {
       res.status(200).json({ products });
     }
   });
-
 };
