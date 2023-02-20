@@ -32,7 +32,6 @@ exports.createProduct = (req, res) => {
     });
   }
 
-
   if (category == "63e7408c4d118f475c8542c2") {
     const product = new Product({
       name: name,
@@ -92,8 +91,10 @@ exports.createProduct = (req, res) => {
 
 exports.getProductsBySlug = (req, res) => {
   const { slug } = req.params;
+  const { tag } = req.query;
+  console.log(tag);
   Category.findOne({ slug: slug })
-    .select("_id type")
+    .select("_id keyword")
     .exec((error, category) => {
       if (error) {
         return res.status(400).json({ error });
@@ -104,29 +105,39 @@ exports.getProductsBySlug = (req, res) => {
             return res.status(400).json({ error });
           }
 
+          let filterByTag = products.filter((product) =>
+            product.tags.includes(tag)
+          );
+
           if (products.length > 0) {
             res.status(200).json({
               products,
+              filterByTag: filterByTag,
               priceRange: {
-                under5k: 5000,
-                under10k: 10000,
-                under15k: 15000,
-                under20k: 20000,
-                under30k: 30000,
+                under500: 499,
+                under1000: 999,
+                under1500: 1499,
+                under2000: 1999,
+                above2000: 2000,
               },
               productsByPrice: {
-                under5k: products.filter((product) => product.price <= 5000),
-                under10k: products.filter(
-                  (product) => product.price > 5000 && product.price <= 10000
+                under500: products.filter(
+                  (product) => product.actualPrice < 500
                 ),
-                under15k: products.filter(
-                  (product) => product.price > 10000 && product.price <= 15000
+                under1000: products.filter(
+                  (product) =>
+                    product.actualPrice > 500 && product.actualPrice <= 999
                 ),
-                under20k: products.filter(
-                  (product) => product.price > 15000 && product.price <= 20000
+                under1500: products.filter(
+                  (product) =>
+                    product.actualPrice > 1000 && product.actualPrice <= 1499
                 ),
-                under30k: products.filter(
-                  (product) => product.price > 20000 && product.price <= 30000
+                under2000: products.filter(
+                  (product) =>
+                    product.actualPrice > 1500 && product.actualPrice <= 1999
+                ),
+                above2000: products.filter(
+                  (product) => product.actualPrice >= 2000
                 ),
               },
             });
@@ -140,11 +151,22 @@ exports.getProductsBySlug = (req, res) => {
 
 exports.getProductDetailsById = (req, res) => {
   const { productId } = req.params;
+
   if (productId) {
     Product.findOne({ _id: productId }).exec((error, product) => {
       if (error) return res.status(400).json({ error });
+
       if (product) {
-        res.status(200).json({ product });
+        Product.find({ category: product.category }).exec(
+          (error, similarProducts) => {
+            if (error) {
+              return res.status(400).json({ error });
+            }
+            else {
+              res.status(200).json({ product, similarProducts: similarProducts });
+            }
+          }
+        );
       }
     });
   } else {
@@ -208,7 +230,7 @@ exports.getProducts = (req, res) => {
 
 exports.createProductReview = async (req, res) => {
   const { rating, comment, name } = req.body;
- 
+
   if (!name) {
     return res.status(400).json({ error: "name is required" });
   }
@@ -220,7 +242,7 @@ exports.createProductReview = async (req, res) => {
   }
 
   const product = await Product.findById(req.params.id);
- 
+
   if (product) {
     const alreadyReviewed = product.reviews.find((r) => {
       return r.user.toString() === req.user._id.toString();
