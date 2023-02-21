@@ -2,7 +2,7 @@ const Product = require("../models/product");
 const shortid = require("shortid");
 const slugify = require("slugify");
 const Category = require("../models/category");
-
+let sortBy = require("lodash.sortby");
 exports.createProduct = (req, res) => {
   //res.status(200).json( { file: req.files, body: req.body } );
 
@@ -92,7 +92,12 @@ exports.createProduct = (req, res) => {
 exports.getProductsBySlug = (req, res) => {
   const { slug } = req.params;
   const { tag } = req.query;
-  console.log(tag);
+  let page = parseInt(req.query.page) || 1;
+  let limit = parseInt(req.query.limit) || 5;
+  let skip = parseInt(req.query.skip) || 5;
+
+  console.log(page, limit);
+
   Category.findOne({ slug: slug })
     .select("_id keyword")
     .exec((error, category) => {
@@ -100,57 +105,74 @@ exports.getProductsBySlug = (req, res) => {
         return res.status(400).json({ error });
       }
       if (category) {
-        Product.find({ category: category._id }).exec((error, products) => {
-          if (error) {
-            return res.status(400).json({ error });
-          }
+        Product.find({ category: category._id })
+          .populate({
+            limit: limit,
+          })
+          .exec((error, products) => {
+            if (error) {
+              return res.status(400).json({ error });
+            }
 
-          let filterByTag = products.filter((product) =>
-            product.tags.includes(tag)
-          );
+            let filterByTag = products.filter((product) =>
+              product.tags.includes(tag)
+            );
 
-          if (products.length > 0) {
-            res.status(200).json({
-              products,
-              filterByTag: filterByTag,
-              priceRange: {
-                under500: 499,
-                under1000: 999,
-                under1500: 1499,
-                under2000: 1999,
-                above2000: 2000,
-              },
-              productsByPrice: {
-                under500: products.filter(
-                  (product) => product.actualPrice < 500
-                ),
-                under1000: products.filter(
-                  (product) =>
-                    product.actualPrice > 500 && product.actualPrice <= 999
-                ),
-                under1500: products.filter(
-                  (product) =>
-                    product.actualPrice > 1000 && product.actualPrice <= 1499
-                ),
-                under2000: products.filter(
-                  (product) =>
-                    product.actualPrice > 1500 && product.actualPrice <= 1999
-                ),
-                above2000: products.filter(
-                  (product) => product.actualPrice >= 2000
-                ),
-              },
-            });
-          } else {
-            res.status(200).json({ products });
-          }
-        });
+            let ascendingOrder = sortBy(products, "actualPrice");
+            let descendingOrder = sortBy(products, "actualPrice").reverse();
+            let sortedByDates = sortBy(products, "updatedAt").reverse();
+            let sortedByRating = sortBy(products, "rating").reverse();
+
+            if (products.length > 0) {
+              res.status(200).json({
+                products,
+                filterByTag: filterByTag,
+                lowToHigh: ascendingOrder,
+                HighToLow: descendingOrder,
+                sortedByDates: sortedByDates,
+                sortedByRating: sortedByRating,
+                priceRange: {
+                  under500: 499,
+                  under1000: 999,
+                  under1500: 1499,
+                  under2000: 1999,
+                  above2000: 2000,
+                },
+                productsByPrice: {
+                  under500: products.filter(
+                    (product) => product.actualPrice < 500
+                  ),
+                  under1000: products.filter(
+                    (product) =>
+                      product.actualPrice > 500 && product.actualPrice <= 999
+                  ),
+                  under1500: products.filter(
+                    (product) =>
+                      product.actualPrice > 1000 && product.actualPrice <= 1499
+                  ),
+                  under2000: products.filter(
+                    (product) =>
+                      product.actualPrice > 1500 && product.actualPrice <= 1999
+                  ),
+                  above2000: products.filter(
+                    (product) => product.actualPrice >= 2000
+                  ),
+                },
+              });
+            } else {
+              res.status(200).json({ products });
+            }
+          });
       }
     });
 };
 
 exports.getProductDetailsById = (req, res) => {
   const { productId } = req.params;
+
+  let page = parseInt(req.query.page) || 1;
+  let limit = parseInt(req.query.limit) || 5;
+  let skip = parseInt(req.query.skip) || 0;
 
   if (productId) {
     Product.findOne({ _id: productId }).exec((error, product) => {
@@ -161,9 +183,10 @@ exports.getProductDetailsById = (req, res) => {
           (error, similarProducts) => {
             if (error) {
               return res.status(400).json({ error });
-            }
-            else {
-              res.status(200).json({ product, similarProducts: similarProducts });
+            } else {
+              res
+                .status(200)
+                .json({ product, similarProducts: similarProducts });
             }
           }
         );

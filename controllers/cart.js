@@ -11,10 +11,9 @@ function runUpdate(condition, updateData) {
 }
 
 exports.addItemToCart = (req, res) => {
-//console.log(req.body)
 
   Cart.findOne({ user: req.user._id }).exec((error, cart) => {
-    //console.log("item",cart)
+   // console.log("item",cart)
     if (error) return res.status(400).json({ error });
     if (cart) {
       //if cart already exists then update cart by quantity
@@ -23,6 +22,7 @@ exports.addItemToCart = (req, res) => {
       req.body.cartItems.forEach((cartItem) => {
         const product = cartItem.product;
         const item = cart.cartItems.find((c) => c.product == product);
+
         let condition, update;
         if (item) {
           condition = { user: req.user._id, "cartItems.product": product };
@@ -49,15 +49,21 @@ exports.addItemToCart = (req, res) => {
         //     }
         // })
       });
+  
       Promise.all(promiseArray)
-        .then((response) => res.status(201).json({ response }))
+        .then((response) =>  {
+          console.log("response ",response)
+        res.status(201).json({ response })})
         .catch((error) => res.status(400).json({ error }));
     } else {
       //if cart not exist then create a new cart
+   
       const cart = new Cart({
         user: req.user._id,
         cartItems: req.body.cartItems,
+   
       });
+      console.log("cart ",cart)
       cart.save((error, cart) => {
         if (error) return res.status(400).json({ error });
         if (cart) {
@@ -94,9 +100,9 @@ exports.getCartItems = (req, res) => {
   //if(user){
  
   Cart.findOne({ user: req.user._id })
-    .populate("cartItems.product", "_id name price productPictures")
+    .populate("cartItems.product", "_id name actualPrice productPictures")
     .exec((error, cart) => {
-      //console.log("item 2",cart)
+      console.log("item 2",cart)
       if (error) return res.status(400).json({ error });
       if (cart) {
         let cartItems = {};
@@ -105,7 +111,7 @@ exports.getCartItems = (req, res) => {
             _id: item.product._id.toString(),
             name: item.product.name,
             img: item.product.productPictures[0].img,
-            price: item.product.price,
+            price: item.product.actualPrice,
             qty: item.quantity,
           };
         });
@@ -117,9 +123,10 @@ exports.getCartItems = (req, res) => {
 
 // new update remove cart items
 exports.removeCartItems = (req, res) => {
-  const { productId } = req.body.payload;
+  const { productId } = req.body;
+  console.log(productId);
   if (productId) {
-    Cart.update(
+    Cart.updateOne(
       { user: req.user._id },
       {
         $pull: {
