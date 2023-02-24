@@ -74,7 +74,6 @@ exports.verifyEmailViaOtp = async (req, res) => {
   return res.status(400).send({ error: "Invalid OTP" });
 };
 
-
 exports.createResetSession = async (req, res) => {
   if (req.app.locals.resetSession) {
     req.app.locals.resetSession = false; // start session for reset password
@@ -116,9 +115,9 @@ exports.signup = (req, res) => {
           specialChars: false,
         });
         if (!user) throw new Error("Email does not exist");
-      
+
         const link = `${process.env.CLIENT_URL}/verifyemail?otp=${req.app.locals.OTP}&id=${user._id}`;
-      
+
         sendEmail(
           user.email,
           "Request Verify Email",
@@ -129,12 +128,28 @@ exports.signup = (req, res) => {
           },
           "./template/requestVerifyEmail.handlebars"
         );
-      
+
         const token = generateJwtToken(user._id, user.role);
-        const { _id, firstName, lastName, email,contactNumber, role, fullName } = user;
+        const {
+          _id,
+          firstName,
+          lastName,
+          email,
+          contactNumber,
+          role,
+          fullName,
+        } = user;
         return res.status(201).json({
           token,
-          user: { _id, firstName, lastName, contactNumber, email, role, fullName },
+          user: {
+            _id,
+            firstName,
+            lastName,
+            contactNumber,
+            email,
+            role,
+            fullName,
+          },
           message: "Email Verification Sent",
         });
       }
@@ -192,7 +207,6 @@ exports.signin = (req, res) => {
     }
   });
 };
-
 
 exports.updateProfile = async (req, res) => {
   const {
@@ -290,6 +304,10 @@ exports.requestPasswordReset = async (req, res) => {
 
   const hash = await bcrypt.hash(resetToken, salt);
 
+  // , {
+  //   expiresIn: "1h",
+  // }
+
   await new Token({
     userId: user._id,
     token: hash,
@@ -364,7 +382,6 @@ exports.signout = (req, res) => {
     message: "Signout successfully...!",
   });
 };
-
 
 exports.generateOTP = async (req, res) => {
   req.app.locals.OTP = await otpGenerator.generate(6, {

@@ -26,7 +26,7 @@ const adminOrderRoute = require("./routes/admin/order.routes");
 //environment variable or constants
 dotenv.config();
 
-// connecting to mongoDB and then running server on port 4000
+// connecting to mongoDB and then running server on port 5000
 const port = process.env.PORT || 5000;
 
 connectDB();
