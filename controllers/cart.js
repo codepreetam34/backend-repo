@@ -20,10 +20,12 @@ exports.addItemToCart = (req, res) => {
       let promiseArray = [];
 
       req.body.cartItems.forEach((cartItem) => {
+
         const product = cartItem.product;
         const item = cart.cartItems.find((c) => c.product == product);
 
         let condition, update;
+
         if (item) {
           condition = { user: req.user._id, "cartItems.product": product };
           update = {
@@ -80,9 +82,9 @@ exports.getCartItems = (req, res) => {
   //if(user){
  //console.log(req.user._id );
   Cart.findOne({ user: req.user._id })
-    .populate("cartItems.product", "_id name actualPrice productPictures")
+    .populate("cartItems.product", "_id name discountPrice offer deliveryDay actualPrice productPictures")
     .exec((error, cart) => {
-      console.log("item 2",cart)
+     // console.log("item 2",cart)
       if (error) return res.status(400).json({ error });
       if (cart) {
         let cartItems = {};
@@ -92,7 +94,10 @@ exports.getCartItems = (req, res) => {
             name: item.product.name,
             img: item.product.productPictures[0].img,
             price: item.product.actualPrice,
+            discountPrice: item.product.discountPrice,
+            offer : item.product.offer,
             qty: item.quantity,
+            deliveryDay: item.deliveryDay,
           };
         });
         res.status(200).json({ cartItems });
@@ -102,6 +107,7 @@ exports.getCartItems = (req, res) => {
 };
 
 // new update remove cart items
+
 exports.removeCartItems = (req, res) => {
   const { productId } = req.body;
  // console.log(req.user._id );
