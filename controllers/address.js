@@ -4,6 +4,7 @@ const UserAddress = require("../models/address");
 exports.addAddress = (req, res) => {
   //return res.status(200).json({body: req.body})
   const { payload } = req.body;
+  console.log(payload)
   if (payload.address) {
     if (payload.address._id) {
       UserAddress.findOneAndUpdate(
@@ -41,10 +42,16 @@ exports.addAddress = (req, res) => {
 };
 
 exports.getAddress = (req, res) => {
+  console.log("userAddress : ",req.user);
   UserAddress.findOne({ user: req.user._id }).exec((error, userAddress) => {
+  //  console.log("userAddress : ",userAddress);
     if (error) return res.status(400).json({ error });
     if (userAddress) {
+     // console.log("userAddress : ",userAddress);
       res.status(200).json({ userAddress });
+    }
+    else{
+      res.status(404).json({ error: "No address found" });
     }
   });
 };

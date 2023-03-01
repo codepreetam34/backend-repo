@@ -3,7 +3,6 @@ const { requireSignin, userMiddleware } = require('../common-middleware');
 const { addAddress, getAddress } = require('../controllers/address');
 const router = express.Router();
 
-
 router.post('/user/address/create', requireSignin, userMiddleware, addAddress);
 router.post('/user/getaddress', requireSignin, userMiddleware, getAddress);
 
