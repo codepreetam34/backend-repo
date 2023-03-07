@@ -44,7 +44,7 @@ router.post('/updatePassword',requireSignin, updatePassword);
 
 router.post('/signout', signout);
 
-router.get('/user/:id', requireSignin,getUserData);
+router.get('/user', requireSignin,getUserData);
 
 
 
