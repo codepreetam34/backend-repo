@@ -71,7 +71,8 @@ exports.deleteBannerById = (req, res) => {
 };
 
 exports.getBanners = async (req, res) => {
-  const banners = await Banner.find({ createdBy: req.user._id })
+  const banners = await Banner.find({ createdBy: req.user._id });
+  console.log(banners)
     // .select("_id title banners")
     // // .populate({ path: "category", select: "_id name" })
     // .exec();
