@@ -379,15 +379,15 @@ exports.resetPassword = async (req, res) => {
 exports.updatePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-//console.log(req.user._id)
+    //console.log(req.user._id)
     // Find user in database by ID
     const user = await User.findById(req.user._id);
 
     // Check if the current password matches the one stored in the database
-    const isMatch = bcrypt.compareSync(currentPassword,user.hash_password);
+    const isMatch = bcrypt.compareSync(currentPassword, user.hash_password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: 'Current password is incorrect' });
+      return res.status(400).json({ message: "Current password is incorrect" });
     }
     const salt = await bcrypt.genSalt(10);
 
@@ -396,15 +396,21 @@ exports.updatePassword = async (req, res) => {
     user.hash_password = hash;
     await user.save();
 
-    return res.status(200).json({ message: 'Password updated successfully' });
+    return res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
-
-
+exports.getUserData = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    return res.status(200).json({ user: user });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 exports.signout = (req, res) => {
   res.clearCookie("token");
