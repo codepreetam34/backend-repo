@@ -1,5 +1,5 @@
 const express = require("express");
-const { signup,signin,signout, updateProfile, forgotPassword,requestVerifyEmail,verifyEmailViaOtp, resetPassword, requestPasswordReset, generateOTP, verifyOTP } = require("../controllers/auth");
+const { signup,signin,signout,updatePassword, updateProfile, forgotPassword,requestVerifyEmail,verifyEmailViaOtp, resetPassword, requestPasswordReset, generateOTP, verifyOTP } = require("../controllers/auth");
 const { validateSignupRequest, isRequestValidated, validateSigninRequest } = require('../validators/auth');
 const { requireSignin, localVariable } = require('../common-middleware');
 const router = express.Router();
@@ -37,6 +37,8 @@ router.post('/verifyEmailViaOtp', verifyEmailViaOtp);
 router.get('/generateOTP',localVariable, generateOTP);
 
 router.post('/verifyOTP',localVariable, verifyOTP);
+
+router.post('/updatePassword',requireSignin, updatePassword);
 
 
 
