@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+
 const imageSliderSchema = new mongoose.Schema(
   {
     title: {

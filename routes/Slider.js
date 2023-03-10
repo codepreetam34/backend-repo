@@ -48,8 +48,6 @@ router.delete(
  );
 router.post(
   "/slider/getsliders",
-  requireSignin,
-  adminMiddleware,
   getSliders
 );
 

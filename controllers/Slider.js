@@ -71,8 +71,10 @@ exports.deleteSliderById = (req, res) => {
 };
 
 exports.getSliders = async (req, res) => {
-  const sliders = await Slider.find({ createdBy: req.user._id })
-    // .select("_id title Sliders")
+
+  const sliders = await Slider.find({})
+  console.log(sliders);
+  // .select("_id title Sliders")
     // // .populate({ path: "category", select: "_id name" })
     // .exec();
 

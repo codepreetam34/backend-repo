@@ -51,8 +51,6 @@ router.delete(
 
 router.post(
   "/banner/getBanners",
-  requireSignin,
-  adminMiddleware,
   getBanners
 );
 

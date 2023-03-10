@@ -1,5 +1,5 @@
 {
-  "name": "backend-vibezter",
+  "name": "backend-colston",
   "version": "1.0.0",
   "description": "An e-commerce app",
   "main": "index.js",
@@ -36,7 +36,6 @@
     "path": "^0.12.7",
     "shortid": "^2.2.16",
     "slugify": "^1.6.5",
-    "stripe": "^11.5.0",
     "validator": "^13.5.2"
   },
   "devDependencies": {
