@@ -3,7 +3,7 @@ const handlebars = require("handlebars");
 const fs = require("fs");
 const path = require("path");
 
-const sendEmail = async (email, subject, payload, template) => {
+const sendEmail = async (email, subject, payload, template, isAttachment,fileName) => {
 
   try {
     // create reusable transporter object using the default SMTP transport
@@ -28,7 +28,15 @@ const sendEmail = async (email, subject, payload, template) => {
         html: compiledTemplate(payload),
       };
     };
-
+    if (isAttachment) {
+      options.attachments = [
+        {
+          filename: `${fileName}.pdf`,
+          path: `${fileName}.pdf`,
+          contentType: "application/pdf",
+        },
+      ];
+    }
     // Send email
     transporter.sendMail(options(), (error, info) => {
       if (error) {

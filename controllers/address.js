@@ -1,9 +1,9 @@
-const address = require("../models/address");
 const UserAddress = require("../models/address");
 
 exports.addAddress = (req, res) => {
   //return res.status(200).json({body: req.body})
   const { payload } = req.body;
+
   if (payload.address) {
     if (payload.address._id) {
       UserAddress.findOneAndUpdate(
@@ -41,10 +41,17 @@ exports.addAddress = (req, res) => {
 };
 
 exports.getAddress = (req, res) => {
+  // console.log("userAddress : ",req.user);
   UserAddress.findOne({ user: req.user._id }).exec((error, userAddress) => {
+    //  console.log("userAddress : ",userAddress);
     if (error) return res.status(400).json({ error });
+    userAddress.address.reverse();
     if (userAddress) {
+      // console.log("userAddress : ",userAddress);
       res.status(200).json({ userAddress });
+      //Item.find({}).sort({'_id': -1});
+    } else {
+      res.status(404).json({ error: "No address found" });
     }
   });
 };

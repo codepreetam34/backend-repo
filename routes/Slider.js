@@ -32,7 +32,6 @@ const upload = multer({ storage: storage });
 router.post(
   "/slider/create",
   requireSignin,
-  adminMiddleware,
   // uploadS3.array("productPicture"),
   upload.array('slider'),
   createSlider
@@ -40,16 +39,21 @@ router.post(
 
 router.get("/slider/:id", getSliderById);
 router.get("/sliders/:slug", getSlidersBySlug);
+
 router.delete(
   "/slider/deletesliderById",
   requireSignin,
   adminMiddleware,
   deleteSliderById
  );
-router.post(
+
+ router.post(
   "/slider/getsliders",
-  getSliders
+ getSliders
 );
 
 module.exports = router;
+
+
+
 

@@ -74,7 +74,6 @@ exports.verifyEmailViaOtp = async (req, res) => {
   return res.status(400).send({ error: "Invalid OTP" });
 };
 
-
 exports.createResetSession = async (req, res) => {
   if (req.app.locals.resetSession) {
     req.app.locals.resetSession = false; // start session for reset password
@@ -116,9 +115,9 @@ exports.signup = (req, res) => {
           specialChars: false,
         });
         if (!user) throw new Error("Email does not exist");
-      
+
         const link = `${process.env.CLIENT_URL}/verifyemail?otp=${req.app.locals.OTP}&id=${user._id}`;
-      
+
         sendEmail(
           user.email,
           "Request Verify Email",
@@ -129,12 +128,28 @@ exports.signup = (req, res) => {
           },
           "./template/requestVerifyEmail.handlebars"
         );
-      
+
         const token = generateJwtToken(user._id, user.role);
-        const { _id, firstName, lastName, email,contactNumber, role, fullName } = user;
+        const {
+          _id,
+          firstName,
+          lastName,
+          email,
+          contactNumber,
+          role,
+          fullName,
+        } = user;
         return res.status(201).json({
           token,
-          user: { _id, firstName, lastName, contactNumber, email, role, fullName },
+          user: {
+            _id,
+            firstName,
+            lastName,
+            contactNumber,
+            email,
+            role,
+            fullName,
+          },
           message: "Email Verification Sent",
         });
       }
@@ -192,7 +207,6 @@ exports.signin = (req, res) => {
     }
   });
 };
-
 
 exports.updateProfile = async (req, res) => {
   const {
@@ -290,6 +304,10 @@ exports.requestPasswordReset = async (req, res) => {
 
   const hash = await bcrypt.hash(resetToken, salt);
 
+  // , {
+  //   expiresIn: "1h",
+  // }
+
   await new Token({
     userId: user._id,
     token: hash,
@@ -358,13 +376,48 @@ exports.resetPassword = async (req, res) => {
   });
 };
 
+exports.updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    //console.log(req.user._id)
+    // Find user in database by ID
+    const user = await User.findById(req.user._id);
+
+    // Check if the current password matches the one stored in the database
+    const isMatch = bcrypt.compareSync(currentPassword, user.hash_password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+    const salt = await bcrypt.genSalt(10);
+
+    const hash = await bcrypt.hash(newPassword, salt);
+    // Update the user's password and save changes to the database
+    user.hash_password = hash;
+    await user.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getUserData = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    return res.status(200).json({ user: user });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 exports.signout = (req, res) => {
   res.clearCookie("token");
   res.status(200).json({
     message: "Signout successfully...!",
   });
 };
-
 
 exports.generateOTP = async (req, res) => {
   req.app.locals.OTP = await otpGenerator.generate(6, {

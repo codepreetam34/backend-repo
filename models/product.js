@@ -18,27 +18,36 @@ const reviewSchema = mongoose.Schema(
 
 const productSchema = new mongoose.Schema(
   {
+
     name: {
       type: String,
       required: true,
       trim: true,
     },
+
     slug: {
       type: String,
       required: true,
       unique: true,
     },
+
     pincode: { type: Array, required: true },
+
     deliveryDay: { type: String },
+
     tags: { type: Array },
 
     halfkgprice: { type: String },
-    onekgprice: { type: String },
-    twokgprice: { type: String },
 
+    onekgprice: { type: String },
+
+    twokgprice: { type: String },
+    
+    
     actualPrice: {
       type: Number,
     },
+
     discountPrice: {
       type: Number,
     },
@@ -47,20 +56,25 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    
     description: {
       type: String,
       required: true,
       trim: true,
     },
+    
     offer: { type: Number },
+    
     productPictures: [{ img: { type: String } }],
 
     reviews: [reviewSchema],
+    
     rating: {
       type: Number,
       required: true,
       default: 0,
     },
+    
     numReviews: {
       type: Number,
       required: true,
@@ -88,7 +102,9 @@ const productSchema = new mongoose.Schema(
     },
     updatedAt: Date,
   },
+
   { timestamps: true }
-);
+
+  );
 
 module.exports = mongoose.model("Product", productSchema);

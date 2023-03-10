@@ -1,5 +1,5 @@
 const express = require("express");
-const { signup,signin,signout, updateProfile, forgotPassword,requestVerifyEmail,verifyEmailViaOtp, resetPassword, requestPasswordReset, generateOTP, verifyOTP } = require("../controllers/auth");
+const { signup,signin,signout,updatePassword, updateProfile, forgotPassword,requestVerifyEmail,verifyEmailViaOtp, resetPassword, requestPasswordReset, generateOTP, verifyOTP, getUserData } = require("../controllers/auth");
 const { validateSignupRequest, isRequestValidated, validateSigninRequest } = require('../validators/auth');
 const { requireSignin, localVariable } = require('../common-middleware');
 const router = express.Router();
@@ -38,13 +38,15 @@ router.get('/generateOTP',localVariable, generateOTP);
 
 router.post('/verifyOTP',localVariable, verifyOTP);
 
+router.post('/updatePassword',requireSignin, updatePassword);
+
 
 
 router.post('/signout', signout);
 
-router.post('/profile', requireSignin, (req, res) => {
-    res.status(200).json({ user: 'profile' })
-});
+router.get('/user', requireSignin,getUserData);
+
+
 
 module.exports = router;
 

@@ -51,7 +51,7 @@ router.delete(
 
 router.post(
   "/banner/getBanners",
-  getBanners
+   getBanners
 );
 
 module.exports = router;
