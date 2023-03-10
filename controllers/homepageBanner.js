@@ -1,6 +1,7 @@
 const Banner = require("../models/homepageBanner");
 const shortid = require("shortid");
 const slugify = require("slugify");
+const homepageBanner = require("../models/homepageBanner");
 
 exports.createBanner = (req, res) => {
   const { title, type, createdBy } = req.body;
@@ -71,10 +72,11 @@ exports.deleteBannerById = (req, res) => {
 };
 
 exports.getBanners = async (req, res) => {
-  const banners = await Banner.find({ createdBy: req.user._id })
-    // .select("_id title banners")
-    // // .populate({ path: "category", select: "_id name" })
-    // .exec();
-
-  res.status(200).json({ banners });
+  homepageBanner.find({}).exec((error, banners) => {
+    if (error) return res.status(400).json({ error });
+    if (banners) {
+      res.status(200).json({ banners });
+    }
+  });
 };
+

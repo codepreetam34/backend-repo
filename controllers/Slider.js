@@ -72,11 +72,10 @@ exports.deleteSliderById = (req, res) => {
 
 exports.getSliders = async (req, res) => {
 
-  const sliders = await Slider.find({})
-  console.log(sliders);
-  // .select("_id title Sliders")
-    // // .populate({ path: "category", select: "_id name" })
-    // .exec();
-
-  res.status(200).json({ sliders });
+  Slider.find({}).exec((error, silders) => {
+    if (error) return res.status(400).json({ error });
+    if (silders) {
+      res.status(200).json({ silders });
+    }
+  });
 };
