@@ -41,15 +41,12 @@ exports.addAddress = (req, res) => {
 };
 
 exports.getAddress = (req, res) => {
-  // console.log("userAddress : ",req.user);
   UserAddress.findOne({ user: req.user._id }).exec((error, userAddress) => {
-    //  console.log("userAddress : ",userAddress);
     if (error) return res.status(400).json({ error });
-    userAddress.address.reverse();
+    console.log("user Address ",userAddress)
     if (userAddress) {
-      // console.log("userAddress : ",userAddress);
+      userAddress.address.reverse();
       res.status(200).json({ userAddress });
-      //Item.find({}).sort({'_id': -1});
     } else {
       res.status(404).json({ error: "No address found" });
     }

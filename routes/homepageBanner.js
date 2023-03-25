@@ -51,8 +51,7 @@ router.delete(
 
 router.post(
   "/banner/getBanners",
-  requireSignin,
-  getBanners
+   getBanners
 );
 
 module.exports = router;

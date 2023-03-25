@@ -39,16 +39,17 @@ router.post(
 
 router.get("/slider/:id", getSliderById);
 router.get("/sliders/:slug", getSlidersBySlug);
+
 router.delete(
   "/slider/deletesliderById",
   requireSignin,
   adminMiddleware,
   deleteSliderById
  );
-router.post(
+
+ router.post(
   "/slider/getsliders",
-  requireSignin,
-  getSliders
+ getSliders
 );
 
 module.exports = router;
