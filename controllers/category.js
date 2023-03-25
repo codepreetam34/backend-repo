@@ -71,6 +71,7 @@ exports.getCategories = (req, res) => {
 exports.updateCategories = async (req, res) => {
   const { _id, name, parentId, type } = req.body;
   const updatedCategories = [];
+  
   if (name instanceof Array) {
     for (let i = 0; i < name.length; i++) {
       const category = {
