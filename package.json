@@ -4,11 +4,11 @@
   "description": "An e-commerce app",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "build": "npm run build",
-    "server": "nodemon server.js",
-    "client": "npm start --prefix client",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
+    "install-server": "cd backend && npm install",
+    "start-server": "cd backend && node app.js",
+    "install-client": "cd client && npm install",
+    "build-client": "cd client && npm run build",
+    "start-client": "cd client && npm run start"
   },
   "keywords": [],
   "author": "Preetam",
