@@ -4,11 +4,11 @@
   "description": "An e-commerce app",
   "main": "index.js",
   "scripts": {
-    "install-server": "cd backend && npm install",
-    "start-server": "cd backend && node app.js",
-    "install-client": "cd client && npm install",
-    "build-client": "cd client && npm run build",
-    "start-client": "cd client && npm run start"
+    "install-server": "npm install",
+    "start-server": "node app.js",
+    "install-client": "npm install",
+    "build-client": "npm run build",
+    "start-client": "npm run start"
   },
   "keywords": [],
   "author": "Preetam",
