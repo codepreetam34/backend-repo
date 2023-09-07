@@ -4,11 +4,12 @@
   "description": "An e-commerce app",
   "main": "index.js",
   "scripts": {
-    "install-server": "npm install",
-    "start-server": "node index.js",
-    "install-client": "npm install",
-    "build-client": "npm run build",
-    "start-client": "npm run start"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js",
+    "build": "webpack --config webpack.config.js",
+    "server": "nodemon index.js",
+    "client": "npm start --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
   },
   "keywords": [],
   "author": "Preetam",
