@@ -3,7 +3,7 @@ const {
   addCategory,
   getCategories,
   updateCategories,
-  deleteCategories,
+  deleteCategories,getChildCategories
 } = require("../controllers/category");
 const {
   requireSignin,
@@ -36,6 +36,7 @@ router.post(
 );
 router.get("/category/getcategory", getCategories);
 
+router.post("/category/getchildrens", getChildCategories);
 router.post(
   "/category/update",
   requireSignin,

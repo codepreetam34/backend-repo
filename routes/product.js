@@ -13,6 +13,7 @@ const {
   deleteProductById,
   getProducts,
   createProductReview,
+  getProductsByCategoryId
 } = require("../controllers/product");
 const multer = require("multer");
 const shortid = require("shortid");
@@ -44,6 +45,7 @@ router.post(
 router.get("/products/:slug", getProductsBySlug);
 
 // router.get('/category/getcategory', getCategories);
+router.post("/product/getProducts/categoryid", getProductsByCategoryId);
 
 router.get("/product/:productId", getProductDetailsById);
 

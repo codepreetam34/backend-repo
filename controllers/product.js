@@ -297,3 +297,36 @@ exports.createProductReview = async (req, res) => {
     res.status(404).json({ message: "Product not found" });
   }
 };
+exports.getProductsByCategoryId = async (req, res) => {
+  const { id } = req.body;
+  const limit = parseInt(req.query.limit) || 20; // Set a default of 10 items per page
+  const page = parseInt(req.query.page) || 1; // Set a default page number of 1
+  try {
+    const products = await Product.find({ category: id })
+      .sort({ _id: -1 })
+      .limit(limit)
+      .skip(limit * page - limit)
+      .select("_id name productPictures category");
+
+    const count = await products.length;
+    const totalPages = Math.ceil(count / limit);
+    const individualCat = await Category.findOne({ _id: id });
+
+    if (!individualCat) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+   // products.sort((a, b) => a.customOrder - b.customOrder);
+
+    if (products) {
+      res.status(200).json({
+        products,
+        pageTitle: individualCat.name,
+        pagination: { currentPage: page, totalPages, totalItems: count },
+      });
+    } else {
+      res.status(200).json({ products });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
