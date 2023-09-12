@@ -292,7 +292,11 @@ exports.requestPasswordReset = async (req, res) => {
 
   const user = await User.findOne({ email });
 
-  if (!user) throw new Error("Email does not exist");
+  if (!user) {
+    return res.status(400).json({
+      message: "Email does not exist",
+    });
+  }
 
   let token = await Token.findOne({ userId: user._id });
 
@@ -336,7 +340,9 @@ exports.resetPassword = async (req, res) => {
   let passwordResetToken = await Token.findOne({ userId });
 
   if (!passwordResetToken) {
-    throw new Error("Invalid or expired password reset token");
+    return res.status(400).json({
+      message: "Invalid or expired password reset token",
+    });
   }
 
   //console.log(passwordResetToken.token, token);
@@ -344,7 +350,9 @@ exports.resetPassword = async (req, res) => {
   const isValid = await bcrypt.compare(token, passwordResetToken.token);
 
   if (!isValid) {
-    throw new Error("Invalid or expired password reset token");
+    return res.status(400).json({
+      message: "Invalid or expired password reset token",
+    });
   }
 
   const salt = await bcrypt.genSalt(10);
