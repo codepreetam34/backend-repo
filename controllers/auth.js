@@ -21,7 +21,11 @@ exports.requestVerifyEmail = async (req, res) => {
     upperCaseAlphabets: false,
     specialChars: false,
   });
-  if (!user) throw new Error("Email does not exist");
+  if (!user) {
+    return res.status(400).json({
+      message: "User not found. Please check your credentials or sign up.",
+    });
+  }
 
   const link = `${process.env.CLIENT_URL}/verifyemail?otp=${req.app.locals.OTP}&id=${user._id}`;
 
@@ -114,8 +118,11 @@ exports.signup = (req, res) => {
           upperCaseAlphabets: false,
           specialChars: false,
         });
-        if (!user) throw new Error("Email does not exist");
-
+        if (!user) {
+          return res.status(400).json({
+            message: "User not found. Please check your credentials or sign up.",
+          });
+        }
         const link = `${process.env.CLIENT_URL}/verifyemail?otp=${req.app.locals.OTP}&id=${user._id}`;
 
         sendEmail(
@@ -275,9 +282,10 @@ exports.forgotPassword = async (req, res) => {
     if (userData) {
       res.status(201).send({ success: true, msg: "Password Reset" });
     } else {
-      res
-        .status(200)
-        .send({ success: true, msg: "This email does not exists." });
+      res.status(200).send({
+        success: true,
+        msg: "User not found. Please check your credentials or sign up.",
+      });
     }
   } catch (error) {
     console.error(error.message);
@@ -294,7 +302,7 @@ exports.requestPasswordReset = async (req, res) => {
 
   if (!user) {
     return res.status(400).json({
-      message: "Email does not exist",
+      message: "User not found. Please check your credentials or sign up.",
     });
   }
 
@@ -319,7 +327,6 @@ exports.requestPasswordReset = async (req, res) => {
   }).save();
 
   const link = `${process.env.CLIENT_URL}/passwordReset?token=${resetToken}&id=${user._id}`;
-  console.log(link);
   sendEmail(
     user.email,
     "Password Reset Request",
@@ -332,6 +339,8 @@ exports.requestPasswordReset = async (req, res) => {
 
   return res.status(201).json({
     link,
+    message:
+      "Your password reset email has been sent. Please check your email inbox.",
   });
 };
 
@@ -423,7 +432,7 @@ exports.getUserData = async (req, res) => {
 exports.signout = (req, res) => {
   res.clearCookie("token");
   res.status(200).json({
-    message: "Signout successfully...!",
+    message: "Logout successful. Have a great day!",
   });
 };
 

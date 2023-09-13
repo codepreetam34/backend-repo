@@ -27,7 +27,7 @@ exports.signup = (req, res) => {
         username: shortid.generate(),
         role,
       });
-      console.log(_user);
+
       _user.save((error, data) => {
         if (error) {
           return res.status(400).json({
@@ -46,40 +46,49 @@ exports.signup = (req, res) => {
 };
 
 exports.signin = (req, res) => {
-  User.findOne({ email: req.body.email }).exec(async (error, user) => {
-    if (error) return res.status(400).json({ error });
-    if (user) {
-      const isPassword = await user.authenticate(req.body.password);
-      if (
-        isPassword &&
-        (user.role === "admin" || user.role === "super-admin")
-      ) {
-        const token = jwt.sign(
-          { _id: user._id, role: user.role },
-          process.env.JWT_SECRET,
-          { expiresIn: "7d" }
-        );
-        const { _id, firstName, lastName, email, role, fullName } = user;
-        res.cookie("token", token, { expiresIn: "7d" });
+  try {
+    User.findOne({ email: req.body.email }).exec(async (error, user) => {
+      if (error) return res.status(400).json({ error });
+      if (user) {
+        const isPassword = await user.authenticate(req.body.password);
+        if (
+          isPassword &&
+          (user.role === "admin" || user.role === "super-admin")
+        ) {
+          const token = jwt.sign(
+            { _id: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: "15d" }
+          );
+          const { _id, firstName, lastName, email, role, fullName } = user;
+          res.cookie("token", token, { expiresIn: "15d" });
 
-        res.status(200).json({
-          token,
-          user: { _id, firstName, lastName, email, role, fullName },
-        });
+          res.status(200).json({
+            token,
+            user: { _id, firstName, lastName, email, role, fullName },
+          });
+        } else {
+          return res.status(400).json({
+            message: "Incorrect login credentials. Please verify and retry.",
+          });
+        }
       } else {
-        return res.status(400).json({
-          message: "Invalid Password",
-        });
+        return res
+          .status(400)
+          .json({
+            message:
+              "User not found. Please check your credentials or sign up.",
+          });
       }
-    } else {
-      return res.status(400).json({ message: "Something went wrong" });
-    }
-  });
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 exports.signout = (req, res) => {
   res.clearCookie("token");
   res.status(200).json({
-    message: "Signout successfully...!",
+    message: "Logout successful. Have a great day!",
   });
 };
