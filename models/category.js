@@ -11,16 +11,7 @@ const categorySchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    keyword: {
-      type: String,
-    },
     imageAltText: {
-      type: String,
-    },
-    customOrder: {
-      type: String,
-    },
-    type: {
       type: String,
     },
     categoryImage: { type: String },

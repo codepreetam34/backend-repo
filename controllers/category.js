@@ -18,8 +18,8 @@ function createCategories(categories, parentId = null) {
       slug: cate.slug,
       categoryImage: cate.categoryImage,
       parentId: cate.parentId,
-      type: cate.type,
-      keyword: cate.keyword,
+      imageAltText: cate.imageAltText,
+      createdAt: cate.createdAt,
       children: createCategories(categories, cate._id),
     });
   }
@@ -32,8 +32,7 @@ exports.addCategory = (req, res) => {
     const categoryObj = {
       name: req.body.name,
       slug: slugify(req.body.name),
-      type: req.body.type,
-      keyword: req.body.keyword,
+      imageAltText: req.body.imageAltText,
       createdBy: req.user._id,
     };
 
@@ -178,7 +177,7 @@ exports.getChildCategories = async (req, res) => {
     const totalProductCount = products.length;
 
     // Sort the subCategory array by customOrder
-   // subCategoryWithProductCount.sort((a, b) => a.customOrder - b.customOrder);
+    // subCategoryWithProductCount.sort((a, b) => a.customOrder - b.customOrder);
     res.status(200).json({
       subCategoryList: subCategoryWithProductCount,
       totalProductCount: totalProductCount, // Adding totalProductCount to the response
