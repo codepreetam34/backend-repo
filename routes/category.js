@@ -3,7 +3,9 @@ const {
   addCategory,
   getCategories,
   updateCategories,
-  deleteCategories,getChildCategories
+  deleteCategories,
+  getChildCategories,
+  getCategoriesById,
 } = require("../controllers/category");
 const {
   requireSignin,
@@ -37,7 +39,10 @@ router.post(
 router.get("/category/getcategory", getCategories);
 
 router.post("/category/getchildrens", getChildCategories);
-router.post(
+
+router.get("/category/:id", getCategoriesById);
+
+router.patch(
   "/category/update",
   requireSignin,
   adminMiddleware,

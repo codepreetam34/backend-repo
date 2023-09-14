@@ -35,13 +35,19 @@ exports.addCategory = (req, res) => {
       imageAltText: req.body.imageAltText,
       createdBy: req.user._id,
     };
-
+    console.log("req f", req.file);
+    console.log("req fs", req.files);
     if (req.file) {
       categoryObj.categoryImage =
         process.env.API + "/public/" + req.file.filename;
     }
 
-    if (req.body.parentId) {
+    if (
+      req.body.parentId &&
+      req.body.parentId !== undefined &&
+      req.body.parentId !== "undefined" &&
+      req.body.parentId !== ""
+    ) {
       categoryObj.parentId = req.body.parentId;
     }
 
@@ -50,7 +56,10 @@ exports.addCategory = (req, res) => {
     cat.save((error, category) => {
       if (error) return res.status(400).json({ error });
       if (category) {
-        return res.status(201).json({ category });
+        return res.status(201).json({
+          category,
+          message: "A new category has been successfully created.",
+        });
       }
     });
   } catch (err) {
@@ -135,7 +144,7 @@ exports.deleteCategories = async (req, res) => {
     }
 
     if (deletedCategories.length == ids.length) {
-      res.status(201).json({ message: "Categories removed" });
+      res.status(201).json({ message: "Category has been successfully deleted." });
     } else {
       res.status(400).json({ message: "Something went wrong" });
     }
@@ -186,5 +195,22 @@ exports.getChildCategories = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getCategoriesById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (id) {
+      await Category.findOne({ _id: id }).exec((error, categoryById) => {
+        if (error) return res.status(400).json({ error });
+
+        res.status(200).json({ categoryById });
+      });
+    } else {
+      return res.status(400).json({ error: "Params required" });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
