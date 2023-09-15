@@ -65,15 +65,19 @@ exports.addCategory = (req, res) => {
   }
 };
 
-exports.getCategories = (req, res) => {
+exports.getCategories = async (req, res) => {
   try {
-    Category.find({}).exec((error, categories) => {
-      if (error) return res.status(400).json({ message: err.message });
-      if (categories) {
-        const categoryList = createCategories(categories);
-        res.status(200).json({ categoryList });
-      }
-    });
+    const categories = await Category.find({}).sort({ _id: -1 });
+
+    const categoryList = createCategories(categories);
+    // categoryList.sort((a, b) => a.customOrder - b.customOrder);
+    if (categoryList) {
+      res.status(200).json({
+        categoryList,
+      });
+    } else {
+      return res.status(400).json({ message: error.message });
+    }
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
