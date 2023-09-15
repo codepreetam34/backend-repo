@@ -36,7 +36,7 @@ router.post(
   upload.single("categoryImage"),
   addCategory
 );
-router.get("/category/getcategory", getCategories);
+router.get("/category/getcategories", getCategories);
 
 router.post("/category/getchildrens", getChildCategories);
 
@@ -46,7 +46,7 @@ router.patch(
   "/category/update",
   requireSignin,
   adminMiddleware,
-  upload.array("categoryImage"),
+  upload.single("categoryImage"),
   updateCategories
 );
 router.post(

@@ -35,8 +35,6 @@ exports.addCategory = (req, res) => {
       imageAltText: req.body.imageAltText,
       createdBy: req.user._id,
     };
-    console.log("req f", req.file);
-    console.log("req fs", req.files);
     if (req.file) {
       categoryObj.categoryImage =
         process.env.API + "/public/" + req.file.filename;
@@ -83,19 +81,29 @@ exports.getCategories = (req, res) => {
 
 exports.updateCategories = async (req, res) => {
   try {
-    const { _id, name, parentId, type } = req.body;
+    const { _id, name, parentId, imageAltText } = req.body;
+    let categoryImage = "";
+
+    if (req.file) {
+      categoryImage = process.env.API + "/public/" + req.file.filename;
+    }
+
     const updatedCategories = [];
 
     if (name instanceof Array) {
       for (let i = 0; i < name.length; i++) {
         const category = {
           name: name[i],
-          type: type[i],
-          keyword: keyword[i],
           slug: slugify(name[i]),
         };
         if (parentId[i] !== "") {
           category.parentId = parentId[i];
+        }
+        if (imageAltText[i] !== "") {
+          category.imageAltText = imageAltText[i];
+        }
+        if (categoryImage[i] !== "") {
+          category.categoryImage = categoryImage[i];
         }
 
         const updatedCategory = await Category.findOneAndUpdate(
@@ -109,12 +117,16 @@ exports.updateCategories = async (req, res) => {
     } else {
       const category = {
         name,
-        type,
-        keyword: keyword,
         slug: slugify(name),
       };
       if (parentId !== "") {
         category.parentId = parentId;
+      }
+      if (imageAltText !== "") {
+        category.imageAltText = imageAltText;
+      }
+      if (categoryImage !== "") {
+        category.categoryImage = categoryImage;
       }
       const updatedCategory = await Category.findOneAndUpdate(
         { _id },
@@ -123,7 +135,10 @@ exports.updateCategories = async (req, res) => {
           new: true,
         }
       );
-      return res.status(201).json({ updatedCategory });
+      return res.status(201).json({
+        updatedCategory,
+        message: "A category has been successfully updated.",
+      });
     }
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -144,7 +159,9 @@ exports.deleteCategories = async (req, res) => {
     }
 
     if (deletedCategories.length == ids.length) {
-      res.status(201).json({ message: "Category has been successfully deleted." });
+      res
+        .status(201)
+        .json({ message: "A category has been successfully deleted." });
     } else {
       res.status(400).json({ message: "Something went wrong" });
     }
