@@ -3,7 +3,8 @@ const shortid = require("shortid");
 const slugify = require("slugify");
 const Category = require("../models/category");
 let sortBy = require("lodash.sortby");
-exports.createProduct = (req, res) => {
+
+exports.createProduct = async (req, res) => {
   //res.status(200).json( { file: req.files, body: req.body } );
 
   const {
@@ -15,24 +16,80 @@ exports.createProduct = (req, res) => {
     tags,
     actualPrice,
     discountPrice,
-
     deliveryDay,
     offer,
-
-    createdBy,
   } = req.body;
 
   let productPictures = [];
 
-  //let cakeDetails = [];
-
-  if (req.files.length > 0) {
-    productPictures = req.files.map((file) => {
+  // Upload product pictures
+  if (req.files && req.files["productPicture"]) {
+    productPictures = req.files["productPicture"].map((file) => {
       return { img: process.env.API + "/public/" + file.filename };
     });
   }
 
-  if (category == "63e7408c4d118f475c8542c2") {
+  let colors =
+    req.files[`colorPicture1`] && req.files[`colorPicture1`] !== undefined
+      ? req.body.colorName
+      : "";
+  let col =
+    req.files[`colorPicture0`] && req.files[`colorPicture0`] !== undefined
+      ? req.body.colorName
+      : [];
+  let colorDocs;
+
+  // Store data in array before saving
+  if (req.files[`colorPicture1`] !== undefined && colors !== "") {
+    colorDocs = await Promise.all(
+      colors?.map(async (color, index) => {
+        const productPictures = await Promise.all(
+          req.files[`colorPicture${index}`]?.map(async (file, i) => {
+            return {
+              img: process.env.API + "/public/" + file.filename,
+              colorImageAltText: req.body.colorImageAltText[i] || "",
+            };
+          })
+        );
+
+        return {
+          colorName: color,
+          productPictures,
+        };
+      })
+    );
+  } else if (col && req.files[`colorPicture0`]?.length > 1) {
+    colorDocs = {
+      colorName: req.body.colorName ? req.body.colorName : "",
+      productPictures: await Promise.all(
+        req.files[`colorPicture0`]?.map(async (file, i) => {
+          return {
+            img: process.env.API + "/public/" + file.filename,
+            colorImageAltText: req.body.colorImageAltText[i] || "",
+          };
+        })
+      ),
+    };
+  } else if (col && req.files[`colorPicture0`]) {
+    const filename =
+      shortid.generate() + "-" + req.files[`colorPicture0`][0]?.filename;
+
+    colorDocs = [
+      {
+        colorName: req.body.colorName ? req.body.colorName : "",
+        productPictures: [
+          {
+            img: process.env.API + "/public/" + filename,
+            colorImageAltText: req.body.colorImageAltText[i] || "",
+          },
+        ],
+      },
+    ];
+  }
+
+  const categoryById = await Category.findOne({ _id: category });
+
+  if (categoryById?.name?.toLowerCase() === "cakes") {
     const product = new Product({
       name: name,
       slug: slugify(name),
@@ -47,9 +104,7 @@ exports.createProduct = (req, res) => {
       category,
       offer,
       discountPrice,
-
       deliveryDay,
-
       halfkgprice: req.body.halfkgprice ? req.body.halfkgprice : "",
       onekgprice: req.body.onekgprice ? req.body.onekgprice : "",
       twokgprice: req.body.twokgprice ? req.body.twokgprice : "",
@@ -70,9 +125,7 @@ exports.createProduct = (req, res) => {
       quantity,
       description,
       pincode,
-
       discountPrice,
-
       deliveryDay,
       offer,
       productPictures,
@@ -83,7 +136,7 @@ exports.createProduct = (req, res) => {
     product.save((error, product) => {
       if (error) return res.status(400).json({ error });
       if (product) {
-        res.status(201).json({ product, files: req.files });
+        res.status(201).json({ products: product, files: req.files });
       }
     });
   }
@@ -167,48 +220,58 @@ exports.getProductsBySlug = (req, res) => {
     });
 };
 
-exports.getProductDetailsById = (req, res) => {
-  const { productId } = req.params;
+exports.getProductDetailsById = async (req, res) => {
+  try {
+    const { productId } = req.params;
 
-  let page = parseInt(req.query.page) || 1;
-  let limit = parseInt(req.query.limit) || 5;
-  let skip = parseInt(req.query.skip) || 0;
+    if (!productId) {
+      return res.status(400).json({ error: "Product Id Params required" });
+    }
 
-  if (productId) {
-    Product.findOne({ _id: productId }).exec((error, product) => {
-      if (error) return res.status(400).json({ error });
+    const product = await Product.findOne({ _id: productId }).exec();
 
-      if (product) {
-        Product.find({ category: product.category }).exec(
-          (error, similarProducts) => {
-            if (error) {
-              return res.status(400).json({ error });
-            } else {
-              res
-                .status(200)
-                .json({ product, similarProducts: similarProducts });
-            }
-          }
-        );
-      }
-    });
-  } else {
-    return res.status(400).json({ error: "Params required" });
+    if (!product) {
+      return res
+        .status(404)
+        .json({ error: "Product not found for provided Product Id" });
+    }
+
+    const similarProducts = await Product.find({
+      category: product.category,
+    }).exec();
+
+    res.status(200).json({ product, similarProducts });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
-// new update
-exports.deleteProductById = (req, res) => {
-  const { productId } = req.body.payload;
-  if (productId) {
-    Product.deleteOne({ _id: productId }).exec((error, result) => {
-      if (error) return res.status(400).json({ error });
-      if (result) {
-        res.status(202).json({ result });
+exports.deleteProductById = async (req, res) => {
+  try {
+    const { productId } = req.body;
+    if (productId) {
+      const response = await Product.findOne({ _id: productId });
+      if (response) {
+        Product.deleteOne({ _id: productId }).exec((error, result) => {
+          if (error) return res.status(400).json({ error });
+          if (result) {
+            res
+              .status(202)
+              .json({ message: "Delete operation done Successfully", result });
+          }
+        });
+      } else {
+        return res
+          .status(400)
+          .json({ error: "Delete operation fialed try again" });
       }
-    });
-  } else {
-    res.status(400).json({ error: "Params required" });
+    } else {
+      res
+        .status(400)
+        .json({ error: "Product Id is required for delete operation" });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -241,14 +304,30 @@ function createProducts(products) {
 
   return productList;
 }
-exports.getProducts = (req, res) => {
-  Product.find({}).exec((error, product) => {
-    if (error) return res.status(400).json({ error });
+
+exports.getProducts = async (req, res) => {
+  // const limit = parseInt(req.query.limit) || 10; // Set a default of 10 items per page
+  // const page = parseInt(req.query.page) || 1; // Set a default page number of 1
+  try {
+    const product = await Product.find({}).sort({ _id: -1 });
+    //     .limit(limit)
+    //     .skip(limit * page - limit);
+    // const count = await Product.countDocuments().exec();
+    // const totalPages = Math.ceil(count / limit);
+    const products = createProducts(product);
+    // let sortedByDates = sortBy(products, "updatedAt");
+
     if (product) {
-      const products = createProducts(product);
-      res.status(200).json({ products });
+      res.status(200).json({
+        products,
+    //    pagination: { currentPage: page, totalPages, totalItems: count },
+      });
+    } else {
+      return res.status(400).json({ error: error.message });
     }
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 exports.createProductReview = async (req, res) => {
@@ -268,7 +347,7 @@ exports.createProductReview = async (req, res) => {
 
   if (product) {
     const alreadyReviewed = product.reviews.find((r) => {
-      console.log("rrrr",r)
+      console.log("rrrr", r);
       return r.user.toString() === req.user._id.toString();
     });
 
@@ -315,7 +394,7 @@ exports.getProductsByCategoryId = async (req, res) => {
     if (!individualCat) {
       return res.status(404).json({ message: "Category not found" });
     }
-   // products.sort((a, b) => a.customOrder - b.customOrder);
+    // products.sort((a, b) => a.customOrder - b.customOrder);
 
     if (products) {
       res.status(200).json({

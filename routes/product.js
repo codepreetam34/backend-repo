@@ -13,7 +13,7 @@ const {
   deleteProductById,
   getProducts,
   createProductReview,
-  getProductsByCategoryId
+  getProductsByCategoryId,
 } = require("../controllers/product");
 const multer = require("multer");
 const shortid = require("shortid");
