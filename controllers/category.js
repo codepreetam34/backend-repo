@@ -5,7 +5,7 @@ const Product = require("../models/product");
 function createCategories(categories, parentId = null) {
   const categoryList = [];
   let category;
-  if (parentId == null) {
+  if (parentId == null || parentId === "" || parentId === " ") {
     category = categories.filter((cat) => cat.parentId == undefined);
   } else {
     category = categories.filter((cat) => cat.parentId == parentId);
