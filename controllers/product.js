@@ -16,17 +16,35 @@ exports.createProduct = async (req, res) => {
     tags,
     actualPrice,
     discountPrice,
+    specifications,
+    halfkgprice,
+    onekgprice,
+    twokgprice,
     deliveryDay,
     offer,
+    _id,
   } = req.body;
 
   let productPictures = [];
 
-  // Upload product pictures
-  if (req.files && req.files["productPicture"]) {
-    productPictures = req.files["productPicture"].map((file) => {
-      return { img: process.env.API + "/public/" + file.filename };
-    });
+  if (
+    req.files &&
+    req.files.length > 0 &&
+    req.files[0].img !== "" &&
+    req.files !== undefined &&
+    req.files != []
+  ) {
+    productPictures = await Promise.all(
+      req.files.map(async (file, index) => {
+        return {
+          img: process.env.API + "/public/" + file.filename,
+          imageAltText:
+            req.files.length > 0
+              ? req.body.imageAltText[index]
+              : req.body.imageAltText || "",
+        };
+      })
+    );
   }
 
   const categoryById = await Category.findOne({ _id: category });
@@ -47,10 +65,15 @@ exports.createProduct = async (req, res) => {
       offer,
       discountPrice,
       deliveryDay,
+      specifications,
+      halfkgprice,
+      onekgprice,
+      twokgprice,
       halfkgprice: req.body.halfkgprice ? req.body.halfkgprice : "",
       onekgprice: req.body.onekgprice ? req.body.onekgprice : "",
       twokgprice: req.body.twokgprice ? req.body.twokgprice : "",
       tags,
+      categoryName: categoryById?.name,
       createdBy: req.user._id,
     });
     product.save((error, product) => {
@@ -71,8 +94,13 @@ exports.createProduct = async (req, res) => {
       deliveryDay,
       offer,
       productPictures,
+      specifications,
+      halfkgprice,
+      onekgprice,
+      twokgprice,
       category,
       tags,
+      categoryName: categoryById?.name,
       createdBy: req.user._id,
     });
     product.save((error, product) => {
@@ -217,10 +245,11 @@ exports.deleteProductById = async (req, res) => {
   }
 };
 
-function createProducts(products) {
+async function createProducts(products) {
   const productList = [];
-
   for (let prod of products) {
+    let category = await Category.findOne({ _id: prod.category });
+    let categoryName = category?.name || "";
     productList.push({
       _id: prod._id,
       pincode: prod.pincode,
@@ -228,17 +257,21 @@ function createProducts(products) {
       name: prod.name,
       quantity: prod.quantity,
       description: prod.description,
+      specifications: prod.specifications,
+      offer: prod.offer,
       productPictures: prod.productPictures,
       actualPrice: prod.actualPrice,
       discountPrice: prod.discountPrice,
       reviews: prod.reviews,
       rating: prod.rating,
       numReviews: prod.numReviews,
+      categoryName: prod.categoryName,
       deliveryDay: prod.deliveryDay,
       category: prod.category,
       halfkgprice: prod.halfkgprice,
       onekgprice: prod.onekgprice,
       twokgprice: prod.twokgprice,
+      categoryName: categoryName,
     });
   }
 
@@ -254,10 +287,10 @@ exports.getProducts = async (req, res) => {
     //     .skip(limit * page - limit);
     // const count = await Product.countDocuments().exec();
     // const totalPages = Math.ceil(count / limit);
-    const products = createProducts(product);
+    const products = await createProducts(product);
     // let sortedByDates = sortBy(products, "updatedAt");
 
-    if (product) {
+    if (products) {
       res.status(200).json({
         products,
         //    pagination: { currentPage: page, totalPages, totalItems: count },
@@ -352,101 +385,142 @@ exports.getProductsByCategoryId = async (req, res) => {
 };
 
 exports.updateProducts = async (req, res) => {
-  //res.status(200).json( { file: req.files, body: req.body } );
-  console.log("req.body ", req.body);
-  const {
-    name,
-    description,
-    category,
-    quantity,
-    pincode,
-    tags,
-    actualPrice,
-    discountPrice,
-    deliveryDay,
-    offer,
-    _id,
-  } = req.body;
-
-  let productPictures = [];
-
-  // Upload product pictures
-
-  if (
-    req.files &&
-    req.files["productPicture"] &&
-    req.files["productPicture"][0].img != "" &&
-    req.files["productPicture"] != undefined &&
-    req.files["productPicture"] != []
-  ) {
-    productPictures = await Promise.all(
-      req.files["productPicture"].map(async (file, index) => {
-        return {
-          img: process.env.API + "/public/" + file.filename,
-          imageAltText: req.body.imageAltText[index] || '',
-        };
-      })
-    );
-  }
-
-  const categoryById = await Category.findOne({ _id: category });
-
-  if (
-    categoryById?.name?.toLowerCase() == "cakes" ||
-    categoryById?.name?.toLowerCase() == "cake"
-  ) {
-    const product = new Product({
-      name: name,
-      slug: slugify(name),
-      actualPrice:
-        actualPrice || req.body.halfkgprice
-          ? actualPrice
-          : req.body.halfkgprice,
-      quantity,
+  try {
+    const {
+      name,
       description,
-      pincode,
-      productPictures,
       category,
-      offer,
-      discountPrice,
-      deliveryDay,
-      halfkgprice: req.body.halfkgprice ? req.body.halfkgprice : "",
-      onekgprice: req.body.onekgprice ? req.body.onekgprice : "",
-      twokgprice: req.body.twokgprice ? req.body.twokgprice : "",
+      quantity,
+      pincode,
       tags,
-      createdBy: req.user._id,
-    });
-    const updatedProduct = await Product.findOneAndUpdate({ _id }, product, {
-      new: true,
-    });
-    if (updatedProduct) {
-      return res.status(200).json({ updatedProduct });
-    } else {
-      return res.status(400).json({ error });
-    }
-  } else {
-    const product = new Product({
-      name: name,
-      slug: slugify(name),
       actualPrice,
-      quantity,
-      description,
-      pincode,
       discountPrice,
+      specifications,
+      halfkgprice,
+      onekgprice,
+      twokgprice,
       deliveryDay,
       offer,
-      productPictures,
-      category,
-      tags,
-      createdBy: req.user._id,
-    });
-    const updatedProduct = await Product.findOneAndUpdate({ _id }, product, {
-      new: true,
-    });
-    if (updatedProduct) {
-      return res.status(200).json({ updatedProduct });
-    } else {
-      return res.status(400).json({ error });
+      _id,
+    } = req.body;
+
+    let productPictures = [];
+
+    if (
+      req.files &&
+      req.files.length > 0 &&
+      req.files[0].img !== "" &&
+      req.files !== undefined &&
+      req.files != []
+    ) {
+      productPictures = await Promise.all(
+        req.files.map(async (file, index) => {
+          return {
+            img: process.env.API + "/public/" + file.filename,
+            imageAltText:
+              req.files.length > 0
+                ? req.body.imageAltText[index]
+                : req.body.imageAltText || "",
+          };
+        })
+      );
     }
+
+    const categoryById = await Category.findOne({ _id: category });
+
+    const updateObject = {};
+
+    // Check and add properties to the updateObject if they are not empty or undefined
+    if (name !== undefined && name !== "") {
+      updateObject.name = name;
+      updateObject.slug = slugify(name);
+    }
+
+    if (halfkgprice !== undefined) {
+      updateObject.halfkgprice = halfkgprice;
+    }
+    if (onekgprice !== undefined) {
+      updateObject.onekgprice = onekgprice;
+    }
+    if (twokgprice !== undefined) {
+      updateObject.twokgprice = twokgprice;
+    }
+
+    if (actualPrice !== undefined) {
+      updateObject.actualPrice = actualPrice;
+    }
+
+    if (quantity !== undefined) {
+      updateObject.quantity = quantity;
+    }
+
+    if (description !== undefined && description !== "") {
+      updateObject.description = description;
+    }
+
+    if (pincode !== undefined) {
+      updateObject.pincode = pincode;
+    }
+    if (specifications !== undefined) {
+      updateObject.specifications = specifications;
+    }
+    if (productPictures.length > 0) {
+      updateObject.productPictures = productPictures;
+    }
+
+    if (category !== undefined) {
+      updateObject.category = category;
+    }
+
+    if (offer !== undefined) {
+      updateObject.offer = offer;
+    }
+
+    if (discountPrice !== undefined) {
+      updateObject.discountPrice = discountPrice;
+    }
+
+    if (deliveryDay !== undefined) {
+      updateObject.deliveryDay = deliveryDay;
+    }
+
+    if (tags !== undefined) {
+      updateObject.tags = tags;
+    }
+
+    if (
+      categoryById?.name?.toLowerCase() == "cakes" ||
+      categoryById?.name?.toLowerCase() == "cake"
+    ) {
+      // Add properties specific to cake category
+      if (req.body.halfkgprice !== undefined) {
+        updateObject.halfkgprice = req.body.halfkgprice;
+      }
+      if (req.body.onekgprice !== undefined) {
+        updateObject.onekgprice = req.body.onekgprice;
+      }
+      if (req.body.twokgprice !== undefined) {
+        updateObject.twokgprice = req.body.twokgprice;
+      }
+    }
+
+    const updatedProduct = await Product.findOneAndUpdate(
+      { _id },
+      updateObject,
+      {
+        new: true,
+      }
+    );
+
+    if (updatedProduct) {
+      return res.status(200).json({
+        updatedProduct,
+        message: "Product has been updated successfully",
+      });
+    } else {
+      return res.status(400).json({ error: "Failed to update product" });
+    }
+  } catch (err) {
+    return res.status(400).json({ error: "Failed to update product" });
   }
 };
