@@ -14,6 +14,7 @@ const {
   getProducts,
   createProductReview,
   getProductsByCategoryId,
+  updateProducts,
 } = require("../controllers/product");
 const multer = require("multer");
 const shortid = require("shortid");
@@ -37,7 +38,6 @@ router.post(
   "/product/create",
   requireSignin,
   adminMiddleware,
-  // uploadS3.array("productPicture"),
   upload.array("productPicture"),
   createProduct
 );
@@ -50,13 +50,21 @@ router.post("/product/getProducts/categoryid", getProductsByCategoryId);
 router.get("/product/:productId", getProductDetailsById);
 
 router.delete(
-  "/product/deleteProductById",
+  "/product/deleteProductById/:productId",
   requireSignin,
   adminMiddleware,
   deleteProductById
 );
 
 router.post("/product/getProducts", getProducts);
+
+router.patch(
+  "/product/update",
+  requireSignin,
+  adminMiddleware,
+  upload.array("productPicture"),
+  updateProducts
+);
 
 router.post("/product/:id/reviews", requireSignin, createProductReview);
 

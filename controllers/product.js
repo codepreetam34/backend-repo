@@ -29,64 +29,6 @@ exports.createProduct = async (req, res) => {
     });
   }
 
-  let colors =
-    req.files[`colorPicture1`] && req.files[`colorPicture1`] !== undefined
-      ? req.body.colorName
-      : "";
-  let col =
-    req.files[`colorPicture0`] && req.files[`colorPicture0`] !== undefined
-      ? req.body.colorName
-      : [];
-  let colorDocs;
-
-  // Store data in array before saving
-  if (req.files[`colorPicture1`] !== undefined && colors !== "") {
-    colorDocs = await Promise.all(
-      colors?.map(async (color, index) => {
-        const productPictures = await Promise.all(
-          req.files[`colorPicture${index}`]?.map(async (file, i) => {
-            return {
-              img: process.env.API + "/public/" + file.filename,
-              colorImageAltText: req.body.colorImageAltText[i] || "",
-            };
-          })
-        );
-
-        return {
-          colorName: color,
-          productPictures,
-        };
-      })
-    );
-  } else if (col && req.files[`colorPicture0`]?.length > 1) {
-    colorDocs = {
-      colorName: req.body.colorName ? req.body.colorName : "",
-      productPictures: await Promise.all(
-        req.files[`colorPicture0`]?.map(async (file, i) => {
-          return {
-            img: process.env.API + "/public/" + file.filename,
-            colorImageAltText: req.body.colorImageAltText[i] || "",
-          };
-        })
-      ),
-    };
-  } else if (col && req.files[`colorPicture0`]) {
-    const filename =
-      shortid.generate() + "-" + req.files[`colorPicture0`][0]?.filename;
-
-    colorDocs = [
-      {
-        colorName: req.body.colorName ? req.body.colorName : "",
-        productPictures: [
-          {
-            img: process.env.API + "/public/" + filename,
-            colorImageAltText: req.body.colorImageAltText[i] || "",
-          },
-        ],
-      },
-    ];
-  }
-
   const categoryById = await Category.findOne({ _id: category });
 
   if (categoryById?.name?.toLowerCase() === "cakes") {
@@ -248,7 +190,7 @@ exports.getProductDetailsById = async (req, res) => {
 
 exports.deleteProductById = async (req, res) => {
   try {
-    const { productId } = req.body;
+    const { productId } = req.params;
     if (productId) {
       const response = await Product.findOne({ _id: productId });
       if (response) {
@@ -257,7 +199,7 @@ exports.deleteProductById = async (req, res) => {
           if (result) {
             res
               .status(202)
-              .json({ message: "Delete operation done Successfully", result });
+              .json({ message: "Delete operation done successfully" });
           }
         });
       } else {
@@ -289,11 +231,9 @@ function createProducts(products) {
       productPictures: prod.productPictures,
       actualPrice: prod.actualPrice,
       discountPrice: prod.discountPrice,
-
       reviews: prod.reviews,
       rating: prod.rating,
       numReviews: prod.numReviews,
-
       deliveryDay: prod.deliveryDay,
       category: prod.category,
       halfkgprice: prod.halfkgprice,
@@ -320,7 +260,7 @@ exports.getProducts = async (req, res) => {
     if (product) {
       res.status(200).json({
         products,
-    //    pagination: { currentPage: page, totalPages, totalItems: count },
+        //    pagination: { currentPage: page, totalPages, totalItems: count },
       });
     } else {
       return res.status(400).json({ error: error.message });
@@ -376,6 +316,7 @@ exports.createProductReview = async (req, res) => {
     res.status(404).json({ message: "Product not found" });
   }
 };
+
 exports.getProductsByCategoryId = async (req, res) => {
   const { id } = req.body;
   const limit = parseInt(req.query.limit) || 20; // Set a default of 10 items per page
@@ -399,7 +340,7 @@ exports.getProductsByCategoryId = async (req, res) => {
     if (products) {
       res.status(200).json({
         products,
-        pageTitle: individualCat.name,
+        pageTitle: individualCat?.name,
         pagination: { currentPage: page, totalPages, totalItems: count },
       });
     } else {
@@ -407,5 +348,105 @@ exports.getProductsByCategoryId = async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+exports.updateProducts = async (req, res) => {
+  //res.status(200).json( { file: req.files, body: req.body } );
+  console.log("req.body ", req.body);
+  const {
+    name,
+    description,
+    category,
+    quantity,
+    pincode,
+    tags,
+    actualPrice,
+    discountPrice,
+    deliveryDay,
+    offer,
+    _id,
+  } = req.body;
+
+  let productPictures = [];
+
+  // Upload product pictures
+
+  if (
+    req.files &&
+    req.files["productPicture"] &&
+    req.files["productPicture"][0].img != "" &&
+    req.files["productPicture"] != undefined &&
+    req.files["productPicture"] != []
+  ) {
+    productPictures = await Promise.all(
+      req.files["productPicture"].map(async (file, index) => {
+        return {
+          img: process.env.API + "/public/" + file.filename,
+          imageAltText: req.body.imageAltText[index] || '',
+        };
+      })
+    );
+  }
+
+  const categoryById = await Category.findOne({ _id: category });
+
+  if (
+    categoryById?.name?.toLowerCase() == "cakes" ||
+    categoryById?.name?.toLowerCase() == "cake"
+  ) {
+    const product = new Product({
+      name: name,
+      slug: slugify(name),
+      actualPrice:
+        actualPrice || req.body.halfkgprice
+          ? actualPrice
+          : req.body.halfkgprice,
+      quantity,
+      description,
+      pincode,
+      productPictures,
+      category,
+      offer,
+      discountPrice,
+      deliveryDay,
+      halfkgprice: req.body.halfkgprice ? req.body.halfkgprice : "",
+      onekgprice: req.body.onekgprice ? req.body.onekgprice : "",
+      twokgprice: req.body.twokgprice ? req.body.twokgprice : "",
+      tags,
+      createdBy: req.user._id,
+    });
+    const updatedProduct = await Product.findOneAndUpdate({ _id }, product, {
+      new: true,
+    });
+    if (updatedProduct) {
+      return res.status(200).json({ updatedProduct });
+    } else {
+      return res.status(400).json({ error });
+    }
+  } else {
+    const product = new Product({
+      name: name,
+      slug: slugify(name),
+      actualPrice,
+      quantity,
+      description,
+      pincode,
+      discountPrice,
+      deliveryDay,
+      offer,
+      productPictures,
+      category,
+      tags,
+      createdBy: req.user._id,
+    });
+    const updatedProduct = await Product.findOneAndUpdate({ _id }, product, {
+      new: true,
+    });
+    if (updatedProduct) {
+      return res.status(200).json({ updatedProduct });
+    } else {
+      return res.status(400).json({ error });
+    }
   }
 };
