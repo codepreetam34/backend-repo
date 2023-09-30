@@ -106,7 +106,7 @@ exports.createProduct = async (req, res) => {
     product.save((error, product) => {
       if (error) return res.status(400).json({ error });
       if (product) {
-        res.status(201).json({ products: product, files: req.files });
+        res.status(201).json({ products: product, files: req.files, message: "Product has been added successfully", });
       }
     });
   }
