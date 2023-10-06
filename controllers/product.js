@@ -359,7 +359,6 @@ exports.getProductsByCategoryId = async (req, res) => {
       .sort({ _id: -1 })
       .limit(limit)
       .skip(limit * page - limit)
-      .select("_id name productPictures category");
 
     const count = await products.length;
     const totalPages = Math.ceil(count / limit);

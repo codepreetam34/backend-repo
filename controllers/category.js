@@ -175,9 +175,11 @@ exports.deleteCategories = async (req, res) => {
 };
 exports.getChildCategories = async (req, res) => {
   try {
+
     const category = await Category.find({}).select(
       "_id parentId name imageAltText categoryImage"
     );
+
     const individualCat = await Category.findOne({ _id: req.body.id });
     if (!individualCat) {
       return res.status(404).json({ message: "Category not found" });
