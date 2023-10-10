@@ -106,7 +106,11 @@ exports.createProduct = async (req, res) => {
     product.save((error, product) => {
       if (error) return res.status(400).json({ error });
       if (product) {
-        res.status(201).json({ products: product, files: req.files, message: "Product has been added successfully", });
+        res.status(201).json({
+          products: product,
+          files: req.files,
+          message: "Product has been added successfully",
+        });
       }
     });
   }
@@ -209,8 +213,11 @@ exports.getProductDetailsById = async (req, res) => {
     const similarProducts = await Product.find({
       category: product.category,
     }).exec();
+    const categoryName = await Category.findById({ _id: product.category });
 
-    res.status(200).json({ product, similarProducts });
+    res
+      .status(200)
+      .json({ product, similarProducts, categoryName: categoryName.name });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -358,7 +365,7 @@ exports.getProductsByCategoryId = async (req, res) => {
     const products = await Product.find({ category: id })
       .sort({ _id: -1 })
       .limit(limit)
-      .skip(limit * page - limit)
+      .skip(limit * page - limit);
 
     const count = await products.length;
     const totalPages = Math.ceil(count / limit);
