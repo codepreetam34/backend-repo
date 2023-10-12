@@ -6,7 +6,9 @@ function createCategories(categories, parentId = null) {
   const categoryList = [];
   let category;
   if (parentId == null || parentId === "" || parentId === " ") {
-    category = categories.filter((cat) => cat.parentId == undefined ||  cat.parentId == '');
+    category = categories.filter(
+      (cat) => cat.parentId == undefined || cat.parentId == ""
+    );
   } else {
     category = categories.filter((cat) => cat.parentId == parentId);
   }
@@ -17,6 +19,7 @@ function createCategories(categories, parentId = null) {
       name: cate.name,
       slug: cate.slug,
       categoryImage: cate.categoryImage,
+      tags: cate.tags,
       parentId: cate.parentId,
       imageAltText: cate.imageAltText,
       createdAt: cate.createdAt,
@@ -27,39 +30,261 @@ function createCategories(categories, parentId = null) {
   return categoryList;
 }
 
-exports.addCategory = (req, res) => {
+// exports.addCategory = (req, res) => {
+//   try {
+//     const categoryObj = {
+//       name: req.body.name,
+//       slug: slugify(req.body.name),
+//       imageAltText: req.body.imageAltText,
+//       createdBy: req.user._id,
+//     };
+//     if (req.file) {
+//       categoryObj.categoryImage =
+//         process.env.API + "/public/" + req.file.filename;
+//     }
+
+//     if (
+//       req.body.parentId &&
+//       req.body.parentId !== undefined &&
+//       req.body.parentId !== "undefined" &&
+//       req.body.parentId !== ""
+//     ) {
+//       categoryObj.parentId = req.body.parentId;
+//     }
+
+//     const cat = new Category(categoryObj);
+
+//     cat.save((error, category) => {
+//       if (error) return res.status(400).json({ error });
+//       if (category) {
+//         return res.status(201).json({
+//           category,
+//           message: "A new category has been successfully created.",
+//         });
+//       }
+//     });
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+// exports.addCategory = (req, res) => {
+//   try {
+//     const categoryObj = {
+//       name: req.body.name,
+//       slug: slugify(req.body.name),
+//       imageAltText: req.body.imageAltText,
+//       createdBy: req.user._id,
+//     };
+
+//     if (req.file) {
+//       categoryObj.categoryImage =
+//         process.env.API + "/public/" + req.file.filename;
+//     }
+
+//     if (
+//       req.body.parentId &&
+//       req.body.parentId !== undefined &&
+//       req.body.parentId !== "undefined" &&
+//       req.body.parentId !== ""
+//     ) {
+//       categoryObj.parentId = req.body.parentId;
+//     }
+
+//     // Extract tags from the request body
+//     const tags = req.body.tags || []; // Assuming that tags are sent as an array in the request body
+
+//     const cat = new Category(categoryObj);
+
+//     cat.save(async (error, category) => {
+//       if (error) {
+//         return res.status(400).json({ error });
+//       }
+
+//       if (category) {
+//         try {
+//           // Iterate through tags and save them to the Tag model
+//           const savedTags = [];
+//           for (const tag of req.body.tags) {
+//             const tagObj = {
+//               tagType: tag.tagType,
+//               names: tag.names, // Assuming tag names are sent as an array
+//             };
+//             savedTags.push(tagObj);
+//           }
+//           console.log("savedTags ", savedTags);
+
+//           return res.status(201).json({
+//             category,
+//             message: "A new category with tags has been successfully created.",
+//           });
+//         } catch (err) {
+//           // Handle tag creation error
+//           return res.status(500).json({ message: err.message });
+//         }
+//       }
+//     });
+//   } catch (err) {
+//     // Handle other errors
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+// exports.addCategory = async (req, res) => {
+//   try {
+//     const { name, imageAltText, tags, parentId } = req.body;
+
+//     const categoryObj = {
+//       name,
+//       slug: slugify(name),
+//       imageAltText,
+//       createdBy: req.user._id,
+//       tagTypes: [], // Assuming you have tagTypes in your request
+//     };
+
+//     if (req.file) {
+//       categoryObj.categoryImage = process.env.API + "/public/" + req.file.filename;
+//     }
+
+//     if (parentId) {
+//       categoryObj.parentId = parentId;
+//     }
+
+//     const cat = new Category(categoryObj);
+
+//     try {
+//       const savedTags = [];
+//       for (const tagData of tags) {
+//         const tagObj = new Tag({
+//           tagType: tagData.tagType,
+//           names: tagData.names,
+//         });
+//         const savedTag = await tagObj.save();
+//         savedTags.push(savedTag);
+//       }
+
+//       // Assign tagTypes to the category
+//       cat.tagTypes = categoryObj.tagTypes;
+
+//       cat.tags = savedTags;
+//       const category = await cat.save();
+
+//       return res.status(201).json({
+//         category,
+//         message: "A new category with tags has been successfully created.",
+//       });
+//     } catch (err) {
+//       return res.status(500).json({ message: err.message });
+//     }
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+// exports.addCategory = async (req, res) => {
+//   try {
+//     const { name, imageAltText, tags, parentId } = req.body;
+
+//     const categoryObj = {
+//       name,
+//       slug: slugify(name),
+//       imageAltText,
+//       createdBy: req.user._id,
+//       tagTypes: [], // Assuming you have tagTypes in your request
+//       tags: [], // Initialize an empty tags array
+//     };
+
+//     if (req.file) {
+//       categoryObj.categoryImage = process.env.API + "/public/" + req.file.filename;
+//     }
+
+//     if (parentId) {
+//       categoryObj.parentId = parentId;
+//     }
+
+//     // Initialize an empty array for saved tags
+//     const savedTags = [];
+
+//     // Iterate through the tags array in the request
+//     for (const tagData of tags) {
+//       const tag = {
+//         tagType: tagData.tagType,
+//         names: tagData.names,
+//       };
+//       savedTags.push(tag);
+//     }
+
+//     categoryObj.tags = savedTags; // Assign the tags to the category
+
+//     const cat = new Category(categoryObj);
+
+//     try {
+//       const category = await cat.save();
+
+//       return res.status(201).json({
+//         category,
+//         message: "A new category with tags has been successfully created.",
+//       });
+//     } catch (err) {
+//       return res.status(500).json({ message: err.message });
+//     }
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+exports.addCategory = async (req, res) => {
   try {
+    const { name, imageAltText, tags, parentId } = req.body;
+
     const categoryObj = {
-      name: req.body.name,
-      slug: slugify(req.body.name),
-      imageAltText: req.body.imageAltText,
+      name,
+      slug: slugify(name),
+      imageAltText,
       createdBy: req.user._id,
+      tags: [],
     };
+
     if (req.file) {
       categoryObj.categoryImage =
         process.env.API + "/public/" + req.file.filename;
     }
 
-    if (
-      req.body.parentId &&
-      req.body.parentId !== undefined &&
-      req.body.parentId !== "undefined" &&
-      req.body.parentId !== ""
-    ) {
-      categoryObj.parentId = req.body.parentId;
+    if (parentId) {
+      categoryObj.parentId = parentId;
     }
+
+    const savedTags = [];
+    const tagsArray = JSON.parse(tags);
+    if (Array.isArray(tagsArray)) {
+      for (const tagData of tagsArray) {
+        const tag = {
+          tagType: tagData.tagType,
+          names: tagData.names,
+        };
+        savedTags.push(tag);
+      }
+    } else {
+      console.log("tags is not an array.");
+      return res.status(400).json({
+        message: "tags is not an array.",
+      });
+    }
+
+    categoryObj.tags = savedTags;
 
     const cat = new Category(categoryObj);
 
-    cat.save((error, category) => {
-      if (error) return res.status(400).json({ error });
-      if (category) {
-        return res.status(201).json({
-          category,
-          message: "A new category has been successfully created.",
-        });
-      }
-    });
+    try {
+      const category = await cat.save();
+
+      return res.status(201).json({
+        category,
+        message: "A new category with tags has been successfully created.",
+      });
+    } catch (err) {
+      return res.status(500).json({ message: err.message });
+    }
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -175,7 +400,6 @@ exports.deleteCategories = async (req, res) => {
 };
 exports.getChildCategories = async (req, res) => {
   try {
-
     const category = await Category.find({}).select(
       "_id parentId name imageAltText categoryImage"
     );
