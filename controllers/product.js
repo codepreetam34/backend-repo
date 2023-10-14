@@ -13,7 +13,6 @@ exports.createProduct = async (req, res) => {
     category,
     quantity,
     pincode,
-    tags,
     actualPrice,
     discountPrice,
     specifications,
@@ -22,7 +21,7 @@ exports.createProduct = async (req, res) => {
     twokgprice,
     deliveryDay,
     offer,
-    _id,
+    tags,
   } = req.body;
 
   let productPictures = [];
@@ -49,6 +48,23 @@ exports.createProduct = async (req, res) => {
 
   const categoryById = await Category.findOne({ _id: category });
 
+  // const savedTags = [];
+  // const tagsArray = JSON.parse(tags);
+  // if (Array.isArray(tagsArray)) {
+  //   for (const tagData of tagsArray) {
+  //     const tag = {
+  //       tagType: tagData.tagType,
+  //       names: tagData.names,
+  //     };
+  //     savedTags.push(tag);
+  //   }
+  // } else {
+  //   console.log("tags is not an array.");
+  //   return res.status(400).json({
+  //     message: "tags is not an array.",
+  //   });
+  // }
+
   if (categoryById?.name?.toLowerCase() === "cakes") {
     const product = new Product({
       name: name,
@@ -72,7 +88,7 @@ exports.createProduct = async (req, res) => {
       halfkgprice: req.body.halfkgprice ? req.body.halfkgprice : "",
       onekgprice: req.body.onekgprice ? req.body.onekgprice : "",
       twokgprice: req.body.twokgprice ? req.body.twokgprice : "",
-      tags,
+      tags: JSON.parse(tags),
       categoryName: categoryById?.name,
       createdBy: req.user._id,
     });
@@ -99,7 +115,7 @@ exports.createProduct = async (req, res) => {
       onekgprice,
       twokgprice,
       category,
-      tags,
+      tags: JSON.parse(tags),
       categoryName: categoryById?.name,
       createdBy: req.user._id,
     });
@@ -528,5 +544,35 @@ exports.updateProducts = async (req, res) => {
     }
   } catch (err) {
     return res.status(400).json({ error: "Failed to update product" });
+  }
+};
+
+exports.getProductsByTag = async (req, res) => {
+  try {
+    const { categoryId, tagName } = req.body;
+    const products = await Product.find({ category: categoryId }).sort({
+      _id: -1,
+    });
+    console.log("cakes ", products);
+    const filteredProducts = products.filter((product) => {
+      return product.tags.some((tag) => tag.names.includes(tagName));
+    });
+
+    const individualCat = await Category.findOne({ _id: categoryId });
+
+    if (!individualCat) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    if (filteredProducts) {
+      return res.status(200).json({
+        pageTitle: tagName,
+        products: filteredProducts,
+      });
+    } else {
+      return res.status(400).json({ error: "Failed to fetch products" });
+    }
+  } catch (err) {
+    return res.status(400).json({ error: "Failed to fetch products" });
   }
 };

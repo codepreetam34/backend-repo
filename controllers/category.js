@@ -253,26 +253,25 @@ exports.addCategory = async (req, res) => {
     if (parentId) {
       categoryObj.parentId = parentId;
     }
-
-    const savedTags = [];
-    const tagsArray = JSON.parse(tags);
-    if (Array.isArray(tagsArray)) {
-      for (const tagData of tagsArray) {
-        const tag = {
-          tagType: tagData.tagType,
-          names: tagData.names,
-        };
-        savedTags.push(tag);
+    if (!parentId) {
+      const savedTags = [];
+      const tagsArray = JSON.parse(tags);
+      if (Array.isArray(tagsArray)) {
+        for (const tagData of tagsArray) {
+          const tag = {
+            tagType: tagData.tagType,
+            names: tagData.names,
+          };
+          savedTags.push(tag);
+        }
+      } else {
+        return res.status(400).json({
+          message: "tags is not an array.",
+        });
       }
-    } else {
-      console.log("tags is not an array.");
-      return res.status(400).json({
-        message: "tags is not an array.",
-      });
+
+      categoryObj.tags = savedTags;
     }
-
-    categoryObj.tags = savedTags;
-
     const cat = new Category(categoryObj);
 
     try {

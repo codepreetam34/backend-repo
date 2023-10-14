@@ -15,7 +15,10 @@ const reviewSchema = mongoose.Schema(
     timestamps: true,
   }
 );
-
+const tagSchema = mongoose.Schema({
+  tagType: { type: String },
+  names: { type: Array },
+});
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -34,7 +37,7 @@ const productSchema = new mongoose.Schema(
 
     deliveryDay: { type: String },
 
-    tags: { type: Array },
+    tags: [tagSchema],
 
     halfkgprice: { type: String },
 

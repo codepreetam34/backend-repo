@@ -15,6 +15,7 @@ const {
   createProductReview,
   getProductsByCategoryId,
   updateProducts,
+  getProductsByTag,
 } = require("../controllers/product");
 const multer = require("multer");
 const shortid = require("shortid");
@@ -57,6 +58,8 @@ router.delete(
 );
 
 router.post("/product/getProducts", getProducts);
+
+router.post("/product/getProductsByTagName", getProductsByTag);
 
 router.patch(
   "/product/update",
