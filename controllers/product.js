@@ -64,13 +64,11 @@ exports.createProduct = async (req, res) => {
       const savedProduct = await product.save();
 
       if (savedProduct) {
-        return res
-          .status(201)
-          .json({
-            product: savedProduct,
-            files: req.files,
-            message: "Product has been added successfully",
-          });
+        return res.status(201).json({
+          product: savedProduct,
+          files: req.files,
+          message: "Product has been added successfully",
+        });
       }
     } else {
       const product = new Product({
@@ -112,8 +110,6 @@ exports.getProductsBySlug = (req, res) => {
   let page = parseInt(req.query.page) || 1;
   let limit = parseInt(req.query.limit) || 5;
   let skip = parseInt(req.query.skip) || 5;
-
-  console.log(page, limit);
 
   Category.findOne({ slug: slug })
     .select("_id keyword")
@@ -317,7 +313,6 @@ exports.createProductReview = async (req, res) => {
 
   if (product) {
     const alreadyReviewed = product.reviews.find((r) => {
-      console.log("rrrr", r);
       return r.user.toString() === req.user._id.toString();
     });
 
@@ -527,7 +522,6 @@ exports.getProductsByTag = async (req, res) => {
     const products = await Product.find({ category: categoryId }).sort({
       _id: -1,
     });
-    console.log("cakes ", products);
     const filteredProducts = products.filter((product) => {
       return product.tags.some((tag) => tag.names.includes(tagName));
     });
