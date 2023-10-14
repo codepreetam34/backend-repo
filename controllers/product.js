@@ -5,130 +5,104 @@ const Category = require("../models/category");
 let sortBy = require("lodash.sortby");
 
 exports.createProduct = async (req, res) => {
-  //res.status(200).json( { file: req.files, body: req.body } );
-
-  const {
-    name,
-    description,
-    category,
-    quantity,
-    pincode,
-    actualPrice,
-    discountPrice,
-    specifications,
-    halfkgprice,
-    onekgprice,
-    twokgprice,
-    deliveryDay,
-    offer,
-    tags,
-  } = req.body;
-
-  let productPictures = [];
-
-  if (
-    req.files &&
-    req.files.length > 0 &&
-    req.files[0].img !== "" &&
-    req.files !== undefined &&
-    req.files != []
-  ) {
-    productPictures = await Promise.all(
-      req.files.map(async (file, index) => {
-        return {
-          img: process.env.API + "/public/" + file.filename,
-          imageAltText:
-            req.files.length > 0
-              ? req.body.imageAltText[index]
-              : req.body.imageAltText || "",
-        };
-      })
-    );
-  }
-
-  const categoryById = await Category.findOne({ _id: category });
-
-  // const savedTags = [];
-  // const tagsArray = JSON.parse(tags);
-  // if (Array.isArray(tagsArray)) {
-  //   for (const tagData of tagsArray) {
-  //     const tag = {
-  //       tagType: tagData.tagType,
-  //       names: tagData.names,
-  //     };
-  //     savedTags.push(tag);
-  //   }
-  // } else {
-  //   console.log("tags is not an array.");
-  //   return res.status(400).json({
-  //     message: "tags is not an array.",
-  //   });
-  // }
-
-  if (categoryById?.name?.toLowerCase() === "cakes") {
-    const product = new Product({
-      name: name,
-      slug: slugify(name),
-      actualPrice:
-        actualPrice || req.body.halfkgprice
-          ? actualPrice
-          : req.body.halfkgprice,
-      quantity,
+  try {
+    const {
+      name,
       description,
-      pincode,
-      productPictures,
       category,
-      offer,
-      discountPrice,
-      deliveryDay,
-      specifications,
-      halfkgprice,
-      onekgprice,
-      twokgprice,
-      halfkgprice: req.body.halfkgprice ? req.body.halfkgprice : "",
-      onekgprice: req.body.onekgprice ? req.body.onekgprice : "",
-      twokgprice: req.body.twokgprice ? req.body.twokgprice : "",
-      tags: JSON.parse(tags),
-      categoryName: categoryById?.name,
-      createdBy: req.user._id,
-    });
-    product.save((error, product) => {
-      if (error) return res.status(400).json({ error });
-      if (product) {
-        res.status(201).json({ product, files: req.files });
-      }
-    });
-  } else {
-    const product = new Product({
-      name: name,
-      slug: slugify(name),
+      quantity,
+      pincode,
       actualPrice,
-      quantity,
-      description,
-      pincode,
       discountPrice,
-      deliveryDay,
-      offer,
-      productPictures,
       specifications,
       halfkgprice,
       onekgprice,
       twokgprice,
-      category,
-      tags: JSON.parse(tags),
-      categoryName: categoryById?.name,
-      createdBy: req.user._id,
-    });
-    product.save((error, product) => {
-      if (error) return res.status(400).json({ error });
-      if (product) {
-        res.status(201).json({
-          products: product,
+      deliveryDay,
+      offer,
+      tags,
+    } = req.body;
+
+    let productPictures = [];
+
+    if (req.files && req.files.length > 0) {
+      productPictures = await Promise.all(
+        req.files.map(async (file, index) => {
+          return {
+            img: process.env.API + "/public/" + file.filename,
+            imageAltText:
+              (req.body.imageAltText && req.body.imageAltText[index]) || "",
+          };
+        })
+      );
+    }
+
+    const categoryById = await Category.findOne({ _id: category });
+
+    if (categoryById?.name?.toLowerCase() === "cakes") {
+      const product = new Product({
+        name,
+        slug: slugify(name),
+        actualPrice: actualPrice || halfkgprice || 0,
+        quantity,
+        description,
+        pincode,
+        productPictures,
+        category,
+        offer,
+        discountPrice,
+        deliveryDay,
+        specifications,
+        halfkgprice: halfkgprice || "",
+        onekgprice: onekgprice || "",
+        twokgprice: twokgprice || "",
+        tags: JSON.parse(tags),
+        categoryName: categoryById?.name,
+        createdBy: req.user._id,
+      });
+
+      const savedProduct = await product.save();
+
+      if (savedProduct) {
+        return res
+          .status(201)
+          .json({
+            product: savedProduct,
+            files: req.files,
+            message: "Product has been added successfully",
+          });
+      }
+    } else {
+      const product = new Product({
+        name,
+        slug: slugify(name),
+        actualPrice,
+        quantity,
+        description,
+        pincode,
+        discountPrice,
+        deliveryDay,
+        offer,
+        productPictures,
+        specifications,
+        category,
+        tags: JSON.parse(tags),
+        categoryName: categoryById?.name,
+        createdBy: req.user._id,
+      });
+
+      const savedProduct = await product.save();
+
+      if (savedProduct) {
+        return res.status(201).json({
+          product: savedProduct,
           files: req.files,
           message: "Product has been added successfully",
         });
       }
-    });
+    }
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
   }
 };
 
