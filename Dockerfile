@@ -5,7 +5,8 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 RUN npm run build
-
+# Install additional dependencies, if needed
+RUN npm install -D webpack-cli
 # Stage 2: Create a smaller image for runtime
 FROM node:14
 WORKDIR /app
@@ -14,7 +15,5 @@ EXPOSE 5000
 ENV NODE_ENV=production
 ENV MONGODB_URI="mongodb+srv://preetamwebgross:learn2progress@productapi.oskurj7.mongodb.net/product?retryWrites=true&w=majority"
 
-# Install additional dependencies, if needed
-RUN npm install -D webpack-cli
 
 CMD ["npm", "start"]
