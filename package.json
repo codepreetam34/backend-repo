@@ -38,12 +38,10 @@
     "path": "^0.12.7",
     "shortid": "^2.2.16",
     "slugify": "^1.6.5",
-    "validator": "^13.5.2"
-  },
-  "devDependencies": {
-    "nodemon": "^2.0.20",
-    "react-scripts": "^5.0.1",
+    "validator": "^13.5.2",
     "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "nodemon": "^2.0.20",
+    "react-scripts": "^5.0.1"
   }
 }
