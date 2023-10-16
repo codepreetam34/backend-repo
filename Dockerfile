@@ -3,10 +3,11 @@ FROM node:14 AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
-COPY . .
-RUN npm run build
 # Install additional dependencies, if needed
 RUN npm install -D webpack-cli
+COPY . .
+RUN npm run build
+
 # Stage 2: Create a smaller image for runtime
 FROM node:14
 WORKDIR /app
