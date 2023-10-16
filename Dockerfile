@@ -2,7 +2,7 @@
 FROM node:14 AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm instal
 COPY . .
 RUN npm run build
 
@@ -13,4 +13,8 @@ COPY --from=builder /app /app
 EXPOSE 5000
 ENV NODE_ENV=production
 ENV MONGODB_URI="mongodb+srv://preetamwebgross:learn2progress@productapi.oskurj7.mongodb.net/product?retryWrites=true&w=majority"
+
+# Install additional dependencies, if needed
+RUN npm install -D webpack-cli
+
 CMD ["npm", "start"]
