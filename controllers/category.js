@@ -126,7 +126,7 @@ exports.getCategories = async (req, res) => {
 
 exports.updateCategories = async (req, res) => {
   try {
-    const { _id, name, parentId, imageAltText } = req.body;
+    const { _id, name, parentId, imageAltText, tags } = req.body;
     let categoryImage = "";
 
     if (req.file) {
@@ -159,6 +159,25 @@ exports.updateCategories = async (req, res) => {
           category.categoryImage = categoryImage[i];
         }
 
+        if (tags) {
+          const savedTags = [];
+          const tagsArray = JSON.parse(tags);
+          if (Array.isArray(tagsArray)) {
+            for (const tagData of tagsArray) {
+              const tag = {
+                tagType: tagData.tagType,
+                names: tagData.names,
+              };
+              savedTags.push(tag);
+            }
+          } else {
+            return res.status(400).json({
+              message: "tags is not an array.",
+            });
+          }
+    
+          category.tags = savedTags;
+        }
         const updatedCategory = await Category.findOneAndUpdate(
           { _id: _id[i] },
           category,
@@ -180,6 +199,25 @@ exports.updateCategories = async (req, res) => {
       }
       if (categoryImage !== "") {
         category.categoryImage = categoryImage;
+      }
+      if (tags) {
+        const savedTags = [];
+        const tagsArray = JSON.parse(tags);
+        if (Array.isArray(tagsArray)) {
+          for (const tagData of tagsArray) {
+            const tag = {
+              tagType: tagData.tagType,
+              names: tagData.names,
+            };
+            savedTags.push(tag);
+          }
+        } else {
+          return res.status(400).json({
+            message: "tags is not an array.",
+          });
+        }
+  
+        category.tags = savedTags;
       }
       const updatedCategory = await Category.findOneAndUpdate(
         { _id },
