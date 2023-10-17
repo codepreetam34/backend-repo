@@ -3,7 +3,15 @@ const shortid = require("shortid");
 const slugify = require("slugify");
 const Category = require("../models/category");
 let sortBy = require("lodash.sortby");
+const { S3 } = require("aws-sdk");
 
+// Initialize AWS S3
+const s3 = new S3({
+  endpoint: "https://vibezter-spaces.blr1.digitaloceanspaces.com",
+  accessKeyId: "DO00XDVVVLMUEJCKADRM",
+  secretAccessKey: "SIFlABu43WE1DvoOHi87bmZmykG0ECL+6t5+O+qBacU",
+  s3ForcePathStyle: true,
+});
 exports.createProduct = async (req, res) => {
   try {
     const {
@@ -25,11 +33,23 @@ exports.createProduct = async (req, res) => {
 
     let productPictures = [];
 
-    if (req.files && req.files.length > 0) {
+    if (req.files) {
       productPictures = await Promise.all(
         req.files.map(async (file, index) => {
+          const fileContent = file.buffer;
+          const filename = shortid.generate() + "-" + file.originalname;
+          const uploadParams = {
+            Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
+            Key: filename,
+            Body: fileContent,
+            ACL: "public-read",
+          };
+
+          // Upload the product picture to DigitalOcean Spaces
+          const uploadedFile = await s3.upload(uploadParams).promise();
+
           return {
-            img: process.env.API + "/public/" + file.filename,
+            img: uploadedFile.Location,
             imageAltText:
               (req.body.imageAltText && req.body.imageAltText[index]) || "",
           };
@@ -214,24 +234,41 @@ exports.deleteProductById = async (req, res) => {
     const { productId } = req.params;
     if (productId) {
       const response = await Product.findOne({ _id: productId });
+
       if (response) {
-        Product.deleteOne({ _id: productId }).exec((error, result) => {
-          if (error) return res.status(400).json({ error });
-          if (result) {
-            res
-              .status(202)
-              .json({ message: "Delete operation done successfully" });
+        response.productPictures.map(async (banner) => {
+          if (banner.img) {
+            const key = banner.img.split("/").pop();
+            const deleteParams = {
+              Bucket: "vibezter-spaces",
+              Key: key,
+            };
+
+            const resDelete = await s3.deleteObject(deleteParams).promise();
+
+            if (resDelete) {
+              Product.deleteOne({ _id: productId }).exec((error, result) => {
+                if (error) return res.status(400).json({ error });
+                if (result) {
+                  res
+                    .status(202)
+                    .json({ error: "Product has been deleted successfully" });
+                }
+              });
+            } else {
+              return res
+                .status(400)
+                .json({ error: "Delete operation failed try again" });
+            }
           }
         });
       } else {
         return res
           .status(400)
-          .json({ error: "Delete operation fialed try again" });
+          .json({ error: "Delete operation failed try again" });
       }
     } else {
-      res
-        .status(400)
-        .json({ error: "Product Id is required for delete operation" });
+      res.status(400).json({ error: "Params required" });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -243,29 +280,54 @@ async function createProducts(products) {
   for (let prod of products) {
     let category = await Category.findOne({ _id: prod.category });
     let categoryName = category?.name || "";
-    productList.push({
-      _id: prod._id,
-      pincode: prod.pincode,
-      tags: prod.tags,
-      name: prod.name,
-      quantity: prod.quantity,
-      description: prod.description,
-      specifications: prod.specifications,
-      offer: prod.offer,
-      productPictures: prod.productPictures,
-      actualPrice: prod.actualPrice,
-      discountPrice: prod.discountPrice,
-      reviews: prod.reviews,
-      rating: prod.rating,
-      numReviews: prod.numReviews,
-      categoryName: prod.categoryName,
-      deliveryDay: prod.deliveryDay,
-      category: prod.category,
-      halfkgprice: prod.halfkgprice,
-      onekgprice: prod.onekgprice,
-      twokgprice: prod.twokgprice,
-      categoryName: categoryName,
-    });
+
+    if (categoryName && categoryName.toLowerCase() == "cakes") {
+      // Use categoryName here for comparison
+      productList.push({
+        _id: prod._id,
+        pincode: prod.pincode,
+        tags: prod.tags,
+        name: prod.name,
+        quantity: prod.quantity,
+        description: prod.description,
+        specifications: prod.specifications,
+        offer: prod.offer,
+        productPictures: prod.productPictures,
+        actualPrice: prod.actualPrice,
+        discountPrice: prod.discountPrice,
+        reviews: prod.reviews,
+        rating: prod.rating,
+        numReviews: prod.numReviews,
+        categoryName: prod.categoryName,
+        deliveryDay: prod.deliveryDay,
+        category: prod.category,
+        halfkgprice: prod.halfkgprice,
+        onekgprice: prod.onekgprice,
+        twokgprice: prod.twokgprice,
+        categoryName: categoryName,
+      });
+    } else {
+      productList.push({
+        _id: prod._id,
+        pincode: prod.pincode,
+        tags: prod.tags,
+        name: prod.name,
+        quantity: prod.quantity,
+        description: prod.description,
+        specifications: prod.specifications,
+        offer: prod.offer,
+        productPictures: prod.productPictures,
+        actualPrice: prod.actualPrice,
+        discountPrice: prod.discountPrice,
+        reviews: prod.reviews,
+        rating: prod.rating,
+        numReviews: prod.numReviews,
+        categoryName: prod.categoryName,
+        deliveryDay: prod.deliveryDay,
+        category: prod.category,
+        categoryName: categoryName,
+      });
+    }
   }
 
   return productList;
@@ -397,21 +459,49 @@ exports.updateProducts = async (req, res) => {
 
     let productPictures = [];
 
-    if (
-      req.files &&
-      req.files.length > 0 &&
-      req.files[0].img !== "" &&
-      req.files !== undefined &&
-      req.files != []
-    ) {
+    if (req.files && req.files.length > 0) {
+      // if (_id) {
+      //   const response = await Product.findOne({ _id: _id });
+
+      //   if (response) {
+      //     response.productPictures.map(async (banner) => {
+      //       if (banner.img) {
+      //         const key = banner.img.split("/").pop();
+      //         const deleteParams = {
+      //           Bucket: "vibezter-spaces",
+      //           Key: key,
+      //         };
+
+      //         await s3.deleteObject(deleteParams).promise();
+      //       }
+      //     });
+      //   } else {
+      //     return res
+      //       .status(400)
+      //       .json({ error: "Delete operation failed try again" });
+      //   }
+      // } else {
+      //   res.status(400).json({ error: "Params required" });
+      // }
+
       productPictures = await Promise.all(
         req.files.map(async (file, index) => {
+          const fileContent = file.buffer;
+          const filename = shortid.generate() + "-" + file.originalname;
+          const uploadParams = {
+            Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
+            Key: filename,
+            Body: fileContent,
+            ACL: "public-read",
+          };
+
+          // Upload the product picture to DigitalOcean Spaces
+          const uploadedFile = await s3.upload(uploadParams).promise();
+
           return {
-            img: process.env.API + "/public/" + file.filename,
+            img: uploadedFile.Location,
             imageAltText:
-              req.files.length > 0
-                ? req.body.imageAltText[index]
-                : req.body.imageAltText || "",
+              (req.body.imageAltText && req.body.imageAltText[index]) || "",
           };
         })
       );

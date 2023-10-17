@@ -1,44 +1,28 @@
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
-const shortid = require("shortid");
-const path = require("path");
-// const multerS3 = require("multer-s3");
-// const aws = require("aws-sdk");
+const AWS = require("aws-sdk");
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(path.dirname(__dirname), "uploads"));
-  },
-  filename: function (req, file, cb) {
-    cb(null, shortid.generate() + "-" + file.originalname);
-  },
+// Initialize AWS S3
+const s3 = new AWS.S3({
+  endpoint: new AWS.Endpoint("https://vibezter-spaces.blr1.digitaloceanspaces.com"),
+  accessKeyId: "DO00XDVVVLMUEJCKADRM", // Replace with your DigitalOcean Spaces access key ID
+  secretAccessKey: "SIFlABu43WE1DvoOHi87bmZmykG0ECL+6t5+O+qBacU", // Replace with your DigitalOcean Spaces secret access key
 });
 
-// const accessKeyId = process.env.accessKeyId;
-// const secretAccessKey = process.env.secretAccessKey;
+// Set storage engine for multer
+const storage = multer.memoryStorage(); // Store files in memory for uploading to Spaces
 
-// const s3 = new aws.S3({
-//   accessKeyId,
-//   secretAccessKey,
-// });
+// Multer middleware for file uploads
+const upload = multer({ storage: storage });
 
-exports.upload = multer({ storage });
+// Multer middleware for specific fields
+const uploadField = multer({ storage: storage }).fields([
+  { name: "pdf", maxCount: 2 },
+  { name: "image", maxCount: 10 },
+]);
 
-// exports.uploadS3 = multer({
-//   storage: multerS3({
-//     s3: s3,
-//     bucket: "flipkart-clone-app",
-//     acl: "public-read",
-//     metadata: function (req, file, cb) {
-//       cb(null, { fieldName: file.fieldname });
-//     },
-//     key: function (req, file, cb) {
-//       cb(null, shortid.generate() + "-" + file.originalname);
-//     },
-//   }),
-// });
-
-exports.requireSignin = async (req, res, next) => {
+// Middleware to check if user is signed in with a valid JWT token
+const requireSignin = async (req, res, next) => {
   if (req.headers.authorization) {
     const token = req.headers.authorization.split(" ")[1];
     try {
@@ -60,33 +44,46 @@ exports.requireSignin = async (req, res, next) => {
   }
 };
 
-exports.userMiddleware = (req, res, next) => {
+// Middleware to check if the user's role is "user"
+const userMiddleware = (req, res, next) => {
   if (req.user.role !== "user") {
     return res.status(400).json({ message: "User access denied" });
   }
   next();
 };
 
-exports.adminMiddleware = (req, res, next) => {
-  if (req.user.role !== "admin") {
-    if (req.user.role !== "super-admin") {
-      return res.status(400).json({ message: "Admin access denied" });
-    }
+// Middleware to check if the user's role is "admin" or "super-admin"
+const adminMiddleware = (req, res, next) => {
+  if (req.user.role !== "admin" && req.user.role !== "super-admin") {
+    return res.status(400).json({ message: "Admin access denied" });
   }
   next();
 };
 
-exports.superAdminMiddleware = (req, res, next) => {
+// Middleware to check if the user's role is "super-admin"
+const superAdminMiddleware = (req, res, next) => {
   if (req.user.role !== "super-admin") {
     return res.status(200).json({ message: "Super Admin access denied" });
   }
   next();
 };
 
-exports.localVariable = (req, res, next) => {
+// Middleware to set local variables
+const localVariable = (req, res, next) => {
   req.app.locals = {
     OTP: null,
     resetSession: false,
   };
   next();
+};
+
+// Export all functions and middleware as an object
+module.exports = {
+  requireSignin,
+  userMiddleware,
+  adminMiddleware,
+  superAdminMiddleware,
+  localVariable,
+  upload,
+  uploadField,
 };

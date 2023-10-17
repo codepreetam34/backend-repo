@@ -1,6 +1,16 @@
 const Category = require("../models/category");
 const slugify = require("slugify");
 const Product = require("../models/product");
+const shortid = require("shortid");
+const { S3 } = require("aws-sdk");
+
+// Initialize AWS S3
+const s3 = new S3({
+  endpoint: "https://vibezter-spaces.blr1.digitaloceanspaces.com",
+  accessKeyId: "DO00XDVVVLMUEJCKADRM",
+  secretAccessKey: "SIFlABu43WE1DvoOHi87bmZmykG0ECL+6t5+O+qBacU",
+  s3ForcePathStyle: true,
+});
 
 function createCategories(categories, parentId = null) {
   const categoryList = [];
@@ -43,14 +53,23 @@ exports.addCategory = async (req, res) => {
     };
 
     if (req.file) {
-      categoryObj.categoryImage =
-        process.env.API + "/public/" + req.file.filename;
+      const fileContent = req.file.buffer;
+      const filename = shortid.generate() + "-" + req.file.originalname;
+      const uploadParams = {
+        Bucket: "vibezter-spaces",
+        Key: filename,
+        Body: fileContent,
+        ACL: "public-read",
+      };
+      const uploadedFile = await s3.upload(uploadParams).promise();
+      categoryObj.categoryImage = uploadedFile.Location;
     }
 
     if (parentId) {
       categoryObj.parentId = parentId;
     }
-    if (!parentId) {
+
+    if (tags) {
       const savedTags = [];
       const tagsArray = JSON.parse(tags);
       if (Array.isArray(tagsArray)) {
@@ -69,6 +88,7 @@ exports.addCategory = async (req, res) => {
 
       categoryObj.tags = savedTags;
     }
+
     const cat = new Category(categoryObj);
 
     try {
@@ -110,9 +130,17 @@ exports.updateCategories = async (req, res) => {
     let categoryImage = "";
 
     if (req.file) {
-      categoryImage = process.env.API + "/public/" + req.file.filename;
+      const fileContent = req.file.buffer;
+      const filename = shortid.generate() + "-" + req.file.originalname;
+      const uploadParams = {
+        Bucket: "vibezter-spaces",
+        Key: filename,
+        Body: fileContent,
+        ACL: "public-read",
+      };
+      const uploadedFile = await s3.upload(uploadParams).promise();
+      categoryImage = uploadedFile.Location;
     }
-
     const updatedCategories = [];
 
     if (name instanceof Array) {
@@ -175,14 +203,28 @@ exports.deleteCategories = async (req, res) => {
   try {
     const { ids } = req.body.payload;
     const deletedCategories = [];
-    for (let i = 0; i < ids.length; i++) {
-      const deleteCategory = await Category.findOneAndDelete({
-        _id: ids[i]._id,
-        createdBy: req.user._id,
-      });
-      deletedCategories.push(deleteCategory);
-    }
 
+    const response = await Category.findOne({ _id: ids[0]._id });
+
+    if (response) {
+      if (response.categoryImage) {
+        const key = response.categoryImage.split("/").pop();
+        const deleteParams = {
+          Bucket: "vibezter-spaces",
+          Key: key,
+        };
+
+        await s3.deleteObject(deleteParams).promise();
+      }
+
+      for (let i = 0; i < ids.length; i++) {
+        const deleteCategory = await Category.findOneAndDelete({
+          _id: ids[i]._id,
+          createdBy: req.user._id,
+        });
+        deletedCategories.push(deleteCategory);
+      }
+    }
     if (deletedCategories.length == ids.length) {
       res
         .status(201)
@@ -190,10 +232,27 @@ exports.deleteCategories = async (req, res) => {
     } else {
       res.status(400).json({ message: "Something went wrong" });
     }
+
+    // for (let i = 0; i < ids.length; i++) {
+    //   const deleteCategory = await Category.findOneAndDelete({
+    //     _id: ids[i]._id,
+    //     createdBy: req.user._id,
+    //   });
+    //   deletedCategories.push(deleteCategory);
+    // }
+
+    // if (deletedCategories.length == ids.length) {
+    //   res
+    //     .status(201)
+    //     .json({ message: "A category has been successfully deleted." });
+    // } else {
+    //   res.status(400).json({ message: "Something went wrong" });
+    // }
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+
 exports.getChildCategories = async (req, res) => {
   try {
     const category = await Category.find({}).select(
