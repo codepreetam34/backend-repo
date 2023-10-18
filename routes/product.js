@@ -18,11 +18,7 @@ const {
   updateProducts,
   getProductsByTag,
 } = require("../controllers/product");
-const multer = require("multer");
-const shortid = require("shortid");
-const path = require("path");
 const router = express.Router();
-const { isRequestValidated } = require("../validators/auth");
 
 router.post(
   "/product/create",

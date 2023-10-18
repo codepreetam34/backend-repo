@@ -426,6 +426,7 @@ exports.getProductsByCategoryId = async (req, res) => {
     if (products) {
       res.status(200).json({
         products,
+        categoryId: id,
         pageTitle: individualCat?.name,
         pagination: { currentPage: page, totalPages, totalItems: count },
       });
@@ -624,6 +625,8 @@ exports.getProductsByTag = async (req, res) => {
 
     if (filteredProducts) {
       return res.status(200).json({
+        categoryId: categoryId,
+        categoryName: individualCat.name,
         pageTitle: tagName,
         products: filteredProducts,
       });
