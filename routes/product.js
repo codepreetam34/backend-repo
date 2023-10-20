@@ -17,6 +17,7 @@ const {
   getProductsByCategoryId,
   updateProducts,
   getProductsByTag,
+  getProductsBySorting,
 } = require("../controllers/product");
 const router = express.Router();
 
@@ -45,6 +46,7 @@ router.delete(
 router.post("/product/getProducts", getProducts);
 
 router.post("/product/getProductsByTagName", getProductsByTag);
+router.post("/product/getProductsBySorting", getProductsBySorting);
 
 router.patch(
   "/product/update",

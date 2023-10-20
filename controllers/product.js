@@ -609,7 +609,7 @@ exports.updateProducts = async (req, res) => {
 
 exports.getProductsByTag = async (req, res) => {
   try {
-    const { categoryId, tagName } = req.body;
+    const { categoryId, tagName, sort } = req.body;
     const products = await Product.find({ category: categoryId }).sort({
       _id: -1,
     });
@@ -624,14 +624,103 @@ exports.getProductsByTag = async (req, res) => {
     }
 
     if (filteredProducts) {
+      let sortedProducts;
+
+      if (sort === 'lowToHigh') {
+        sortedProducts = filteredProducts.slice().sort((a, b) => a.price - b.price);
+      } else if (sort === 'highToLow') {
+        sortedProducts = filteredProducts.slice().sort((a, b) => b.price - a.price);
+      } else if (sort === 'newToOld') {
+        sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      } else if (sort === 'oldToNew') {
+        sortedProducts = filteredProducts.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+      } else {
+        // Default sorting is by the latest products (original sorting).
+        sortedProducts = filteredProducts;
+      }
+
       return res.status(200).json({
         categoryId: categoryId,
         categoryName: individualCat.name,
         pageTitle: tagName,
-        products: filteredProducts,
+        products: sortedProducts,
       });
     } else {
       return res.status(400).json({ error: "Failed to fetch products" });
+    }
+  } catch (err) {
+    return res.status(400).json({ error: "Failed to fetch products" });
+  }
+};
+exports.getProductsBySorting = async (req, res) => {
+  try {
+    const { sort, categoryId, pageInfo, tagName } = req.body;
+    console.log("result ", sort, categoryId, pageInfo)
+    const products = await Product.find({ category: categoryId }).sort({
+      _id: -1,
+    });
+
+    const individualCat = await Category.findOne({ _id: categoryId });
+
+    if (!individualCat) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+    if (pageInfo == "productPage") {
+      const filteredProducts = products.filter((product) => {
+        return product.tags.some((tag) => tag.names.includes(tagName));
+      });
+
+      if (filteredProducts) {
+        let sortedProducts;
+        if (sort === 'Low to High') {
+          sortedProducts = filteredProducts.slice().sort((a, b) => a.price - b.price);
+        } else if (sort === 'High to Low') {
+          sortedProducts = filteredProducts.slice().sort((a, b) => b.price - a.price);
+        } else if (sort === 'New to Old') {
+          sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        } else if (sort === 'Old to New') {
+          sortedProducts = filteredProducts.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+        } else {
+          // Default sorting is by the latest products (original sorting).
+          sortedProducts = filteredProducts;
+        }
+
+        return res.status(200).json({
+          categoryId: categoryId,
+          categoryName: individualCat.name,
+          pageTitle: tagName,
+          products: sortedProducts,
+        });
+      } else {
+        return res.status(400).json({ error: "Failed to fetch products" });
+      }
+    }
+    else {
+
+      if (products) {
+        let sortedProducts;
+        if (sort === 'Low to High') {
+          sortedProducts = products.slice().sort((a, b) => a.price - b.price);
+        } else if (sort === 'High to Low') {
+          sortedProducts = products.slice().sort((a, b) => b.price - a.price);
+        } else if (sort === 'New to Old') {
+          sortedProducts = products.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        } else if (sort === 'Old to New') {
+          sortedProducts = products.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+        } else {
+          // Default sorting is by the latest products (original sorting).
+          sortedProducts = products;
+        }
+
+        return res.status(200).json({
+          categoryId: categoryId,
+          categoryName: individualCat.name,
+          pageTitle: tagName,
+          products: sortedProducts,
+        });
+      } else {
+        return res.status(400).json({ error: "Failed to fetch products" });
+      }
     }
   } catch (err) {
     return res.status(400).json({ error: "Failed to fetch products" });
