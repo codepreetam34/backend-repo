@@ -673,9 +673,9 @@ exports.getProductsBySorting = async (req, res) => {
       if (filteredProducts) {
         let sortedProducts;
         if (sort === 'Low to High') {
-          sortedProducts = filteredProducts.slice().sort((a, b) => a.price - b.price);
+          sortedProducts = filteredProducts.slice().sort((a, b) => a.discountPrice - b.discountPrice);
         } else if (sort === 'High to Low') {
-          sortedProducts = filteredProducts.slice().sort((a, b) => b.price - a.price);
+          sortedProducts = filteredProducts.slice().sort((a, b) => b.discountPrice - a.discountPrice);
         } else if (sort === 'New to Old') {
           sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         } else if (sort === 'Old to New') {
@@ -689,7 +689,7 @@ exports.getProductsBySorting = async (req, res) => {
           categoryId: categoryId,
           categoryName: individualCat.name,
           pageTitle: tagName,
-          products: sortedProducts,
+          sortedProducts: sortedProducts,
         });
       } else {
         return res.status(400).json({ error: "Failed to fetch products" });
@@ -716,7 +716,7 @@ exports.getProductsBySorting = async (req, res) => {
           categoryId: categoryId,
           categoryName: individualCat.name,
           pageTitle: tagName,
-          products: sortedProducts,
+          sortedProducts: sortedProducts,
         });
       } else {
         return res.status(400).json({ error: "Failed to fetch products" });
