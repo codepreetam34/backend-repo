@@ -603,7 +603,7 @@ exports.updateProducts = async (req, res) => {
       return res.status(400).json({ error: "Failed to update product" });
     }
   } catch (err) {
-    return res.status(400).json({ error: "Failed to update product" });
+    return res.status(500).json({ error: "Failed to update product", err });
   }
 };
 
@@ -613,6 +613,7 @@ exports.getProductsByTag = async (req, res) => {
     const products = await Product.find({ category: categoryId }).sort({
       _id: -1,
     });
+    if (products.length <= 0) { return res.status(200).json({ products }); }
     const filteredProducts = products.filter((product) => {
       return product.tags.some((tag) => tag.names.includes(tagName));
     });
@@ -655,7 +656,7 @@ exports.getProductsByTag = async (req, res) => {
 exports.getProductsBySorting = async (req, res) => {
   try {
     const { sort, categoryId, pageInfo, tagName } = req.body;
-    console.log("result ", sort, categoryId, pageInfo)
+
     const products = await Product.find({ category: categoryId }).sort({
       _id: -1,
     });
