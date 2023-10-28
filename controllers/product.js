@@ -404,39 +404,7 @@ exports.createProductReview = async (req, res) => {
   }
 };
 
-exports.getProductsByCategoryId = async (req, res) => {
-  const { id } = req.body;
-  const limit = parseInt(req.query.limit) || 20; // Set a default of 10 items per page
-  const page = parseInt(req.query.page) || 1; // Set a default page number of 1
-  try {
-    const products = await Product.find({ category: id })
-      .sort({ _id: -1 })
-      .limit(limit)
-      .skip(limit * page - limit);
 
-    const count = await products.length;
-    const totalPages = Math.ceil(count / limit);
-    const individualCat = await Category.findOne({ _id: id });
-
-    if (!individualCat) {
-      return res.status(404).json({ message: "Category not found" });
-    }
-    // products.sort((a, b) => a.customOrder - b.customOrder);
-
-    if (products) {
-      res.status(200).json({
-        products,
-        categoryId: id,
-        pageTitle: individualCat?.name,
-        pagination: { currentPage: page, totalPages, totalItems: count },
-      });
-    } else {
-      res.status(200).json({ products });
-    }
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
 
 exports.updateProducts = async (req, res) => {
   try {
@@ -607,52 +575,6 @@ exports.updateProducts = async (req, res) => {
   }
 };
 
-exports.getProductsByTag = async (req, res) => {
-  try {
-    const { categoryId, tagName, sort } = req.body;
-    const products = await Product.find({ category: categoryId }).sort({
-      _id: -1,
-    });
-    if (products.length <= 0) { return res.status(200).json({ products }); }
-    const filteredProducts = products.filter((product) => {
-      return product.tags.some((tag) => tag.names.includes(tagName));
-    });
-
-    const individualCat = await Category.findOne({ _id: categoryId });
-
-    if (!individualCat) {
-      return res.status(404).json({ message: "Category not found" });
-    }
-
-    if (filteredProducts) {
-      let sortedProducts;
-
-      if (sort === 'lowToHigh') {
-        sortedProducts = filteredProducts.slice().sort((a, b) => a.price - b.price);
-      } else if (sort === 'highToLow') {
-        sortedProducts = filteredProducts.slice().sort((a, b) => b.price - a.price);
-      } else if (sort === 'newToOld') {
-        sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-      } else if (sort === 'oldToNew') {
-        sortedProducts = filteredProducts.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
-      } else {
-        // Default sorting is by the latest products (original sorting).
-        sortedProducts = filteredProducts;
-      }
-
-      return res.status(200).json({
-        categoryId: categoryId,
-        categoryName: individualCat.name,
-        pageTitle: tagName,
-        products: sortedProducts,
-      });
-    } else {
-      return res.status(400).json({ error: "Failed to fetch products" });
-    }
-  } catch (err) {
-    return res.status(400).json({ error: "Failed to fetch products" });
-  }
-};
 exports.getProductsBySorting = async (req, res) => {
   try {
     const { sort, categoryId, pageInfo, tagName } = req.body;
@@ -727,3 +649,116 @@ exports.getProductsBySorting = async (req, res) => {
     return res.status(400).json({ error: "Failed to fetch products" });
   }
 };
+
+
+exports.getProductsByCategoryId = async (req, res) => {
+  const { id, pincodeData } = req.body;
+  const limit = parseInt(req.query.limit) || 20; // Set a default of 10 items per page
+  const page = parseInt(req.query.page) || 1; // Set a default page number of 1
+  try {
+    const products = await Product.find({ category: id })
+      .sort({ _id: -1 })
+      .limit(limit)
+      .skip(limit * page - limit);
+
+    const count = await products.length;
+    const totalPages = Math.ceil(count / limit);
+    const individualCat = await Category.findOne({ _id: id });
+
+    if (!individualCat) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    // Check if pincodeData is provided
+    if (pincodeData) {
+      // Filter products by pincodeData
+      const filteredProducts = products.filter((product) =>
+        product.pincode.includes(pincodeData)
+      );
+
+      if (filteredProducts.length > 0) {
+        res.status(200).json({
+          products: filteredProducts,
+          categoryId: id,
+          pageTitle: individualCat?.name,
+          pagination: { currentPage: page, totalPages, totalItems: filteredProducts.length },
+        });
+      } else {
+        res.status(200).json({ products: [] });
+      }
+    } else {
+      // If pincodeData is not provided, return all products
+      res.status(200).json({
+        products,
+        categoryId: id,
+        pageTitle: individualCat?.name,
+        pagination: { currentPage: page, totalPages, totalItems: count },
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+
+exports.getProductsByTag = async (req, res) => {
+  try {
+    const { categoryId, tagName, sort, pincodeData } = req.body;
+
+    // Step 1: Fetch all products in the category
+    const allProducts = await Product.find({ category: categoryId }).sort({
+      _id: -1,
+    });
+
+    if (allProducts.length <= 0) {
+      return res.status(200).json({ products: [] });
+    }
+
+    // Step 2: Filter products by pincodeData if it's provided
+    let filteredProducts = allProducts;
+    if (pincodeData) {
+      filteredProducts = filteredProducts.filter((product) => product.pincode.includes(pincodeData));
+    }
+
+    // Step 3: Filter products by tagName
+    filteredProducts = filteredProducts.filter((product) =>
+      product.tags.some((tag) => tag.names.includes(tagName))
+    );
+
+    const individualCat = await Category.findOne({ _id: categoryId });
+
+    if (!individualCat) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    if (filteredProducts) {
+      let sortedProducts;
+
+      if (sort === 'lowToHigh') {
+        sortedProducts = filteredProducts.slice().sort((a, b) => a.price - b.price);
+      } else if (sort === 'highToLow') {
+        sortedProducts = filteredProducts.slice().sort((a, b) => b.price - a.price);
+      } else if (sort === 'newToOld') {
+        sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      } else if (sort === 'oldToNew') {
+        sortedProducts = filteredProducts.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+      } else {
+        // Default sorting is by the latest products (original sorting).
+        sortedProducts = filteredProducts;
+      }
+
+      return res.status(200).json({
+        categoryId: categoryId,
+        categoryName: individualCat.name,
+        pageTitle: tagName,
+        products: sortedProducts,
+      });
+    } else {
+      return res.status(400).json({ error: "Failed to fetch products" });
+    }
+  } catch (err) {
+    return res.status(400).json({ error: "Failed to fetch products" });
+  }
+};
+
