@@ -112,16 +112,53 @@ exports.getCategories = async (req, res) => {
 
     const categoryList = createCategories(categories);
     // categoryList.sort((a, b) => a.customOrder - b.customOrder);
-    if (categoryList) {
-      res.status(200).json({
-        categoryList,
-      });
-    } else {
-      return res.status(400).json({ message: error.message });
-    }
+
+    const categoryIds = categoryList.map((cat) => cat._id);
+
+    const products = await Product.find({ category: { $in: categoryIds } });
+
+    const categoryWithProductCount = categoryList.map((cat) => {
+      const count = products.filter(
+        (product) => product.category.toString() === cat._id.toString()
+      ).length;
+
+      return {
+        _id: cat._id, // Include only the necessary properties
+        name: cat.name,
+        parentId: cat.parentId,
+        imageAltText: cat.imageAltText,
+        tags: cat.tags,
+        categoryImage: cat.categoryImage,
+        customOrder: cat.customOrder,
+        productCount: count,
+      };
+    });
+
+    const totalProductCount = products.length;
+
+    // Sort the subCategory array by customOrder
+    // subCategoryWithProductCount.sort((a, b) => a.customOrder - b.customOrder);
+    res.status(200).json({
+      categoryList: categoryWithProductCount,
+      totalProductCount: totalProductCount, // Adding totalProductCount to the response
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
+
+
+
+
+  //   if (categoryList) {
+  //     res.status(200).json({
+  //       categoryList,
+  //     });
+  //   } else {
+  //     return res.status(400).json({ message: error.message });
+  //   }
+  // } catch (err) {
+  //   res.status(500).json({ message: err.message });
+  // }
 };
 
 exports.updateCategories = async (req, res) => {
@@ -175,7 +212,7 @@ exports.updateCategories = async (req, res) => {
               message: "tags is not an array.",
             });
           }
-    
+
           category.tags = savedTags;
         }
         const updatedCategory = await Category.findOneAndUpdate(
@@ -216,7 +253,7 @@ exports.updateCategories = async (req, res) => {
             message: "tags is not an array.",
           });
         }
-  
+
         category.tags = savedTags;
       }
       const updatedCategory = await Category.findOneAndUpdate(
