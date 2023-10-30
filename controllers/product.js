@@ -418,9 +418,6 @@ exports.updateProducts = async (req, res) => {
       actualPrice,
       discountPrice,
       specifications,
-      halfkgprice,
-      onekgprice,
-      twokgprice,
       deliveryDay,
       offer,
       _id,
@@ -486,15 +483,6 @@ exports.updateProducts = async (req, res) => {
       updateObject.slug = slugify(name);
     }
 
-    if (halfkgprice !== undefined) {
-      updateObject.halfkgprice = halfkgprice;
-    }
-    if (onekgprice !== undefined) {
-      updateObject.onekgprice = onekgprice;
-    }
-    if (twokgprice !== undefined) {
-      updateObject.twokgprice = twokgprice;
-    }
 
     if (actualPrice !== undefined) {
       updateObject.actualPrice = actualPrice;
@@ -519,6 +507,7 @@ exports.updateProducts = async (req, res) => {
     }
 
     if (category !== undefined) {
+
       updateObject.category = category;
     }
 
@@ -579,9 +568,7 @@ exports.getProductsBySorting = async (req, res) => {
   try {
     const { sort, categoryId, pageInfo, tagName } = req.body;
 
-    const products = await Product.find({ category: categoryId }).sort({
-      _id: -1,
-    });
+    const products = await Product.find({ category: categoryId });
 
     const individualCat = await Category.findOne({ _id: categoryId });
 
@@ -621,26 +608,55 @@ exports.getProductsBySorting = async (req, res) => {
     else {
 
       if (products) {
-        let sortedProducts;
-        if (sort === 'Low to High') {
-          sortedProducts = products.slice().sort((a, b) => a.price - b.price);
-        } else if (sort === 'High to Low') {
-          sortedProducts = products.slice().sort((a, b) => b.price - a.price);
-        } else if (sort === 'New to Old') {
-          sortedProducts = products.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        } else if (sort === 'Old to New') {
-          sortedProducts = products.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
-        } else {
-          // Default sorting is by the latest products (original sorting).
-          sortedProducts = products;
-        }
+        if (tagName) {
+          const filteredProducts = products.filter((product) => {
+            return product.tags.some((tag) => tag.names.includes(tagName));
+          });
 
-        return res.status(200).json({
-          categoryId: categoryId,
-          categoryName: individualCat.name,
-          pageTitle: tagName,
-          sortedProducts: sortedProducts,
-        });
+
+          let sortedProducts;
+          if (sort === 'Low to High') {
+            sortedProducts = filteredProducts.slice().sort((a, b) => a.price - b.price);
+          } else if (sort === 'High to Low') {
+            sortedProducts = filteredProducts.slice().sort((a, b) => b.price - a.price);
+          } else if (sort === 'New to Old') {
+            sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+          } else if (sort === 'Old to New') {
+            sortedProducts = filteredProducts.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+          } else {
+            // Default sorting is by the latest products (original sorting).
+            sortedProducts = filteredProducts;
+          }
+
+          return res.status(200).json({
+            categoryId: categoryId,
+            categoryName: individualCat.name,
+            pageTitle: tagName,
+            sortedProducts: sortedProducts,
+          });
+        } else {
+
+          let sortedProducts;
+          if (sort === 'Low to High') {
+            sortedProducts = products.slice().sort((a, b) => a.discountPrice - b.discountPrice);
+          } else if (sort === 'High to Low') {
+            sortedProducts = products.slice().sort((a, b) => b.discountPrice - a.discountPrice);
+          } else if (sort === 'New to Old') {
+            sortedProducts = products.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+          } else if (sort === 'Old to New') {
+            sortedProducts = products.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+          } else {
+            // Default sorting is by the latest products (original sorting).
+            sortedProducts = products;
+          }
+
+          return res.status(200).json({
+            categoryId: categoryId,
+            categoryName: individualCat.name,
+            pageTitle: tagName,
+            sortedProducts: sortedProducts,
+          });
+        }
       } else {
         return res.status(400).json({ error: "Failed to fetch products" });
       }
@@ -655,12 +671,13 @@ exports.getProductsByCategoryId = async (req, res) => {
   const { id, pincodeData } = req.body;
   const limit = parseInt(req.query.limit) || 20; // Set a default of 10 items per page
   const page = parseInt(req.query.page) || 1; // Set a default page number of 1
+
+
   try {
     const products = await Product.find({ category: id })
       .sort({ _id: -1 })
       .limit(limit)
       .skip(limit * page - limit);
-
     const count = await products.length;
     const totalPages = Math.ceil(count / limit);
     const individualCat = await Category.findOne({ _id: id });
@@ -675,6 +692,7 @@ exports.getProductsByCategoryId = async (req, res) => {
       const filteredProducts = products.filter((product) =>
         product.pincode.includes(pincodeData)
       );
+  
 
       if (filteredProducts.length > 0) {
         res.status(200).json({
@@ -684,7 +702,10 @@ exports.getProductsByCategoryId = async (req, res) => {
           pagination: { currentPage: page, totalPages, totalItems: filteredProducts.length },
         });
       } else {
-        res.status(200).json({ products: [] });
+        res.status(200).json({
+          products: [], categoryId: id,
+          pageTitle: individualCat?.name,
+        });
       }
     } else {
       // If pincodeData is not provided, return all products
@@ -735,13 +756,13 @@ exports.getProductsByTag = async (req, res) => {
     if (filteredProducts) {
       let sortedProducts;
 
-      if (sort === 'lowToHigh') {
-        sortedProducts = filteredProducts.slice().sort((a, b) => a.price - b.price);
-      } else if (sort === 'highToLow') {
-        sortedProducts = filteredProducts.slice().sort((a, b) => b.price - a.price);
-      } else if (sort === 'newToOld') {
+      if (sort === 'Low to High') {
+        sortedProducts = filteredProducts.slice().sort((a, b) => a.discountPrice - b.discountPrice);
+      } else if (sort === 'High to Low') {
+        sortedProducts = filteredProducts.slice().sort((a, b) => b.discountPrice - a.discountPrice);
+      } else if (sort === 'New to Old') {
         sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-      } else if (sort === 'oldToNew') {
+      } else if (sort === 'Old to New') {
         sortedProducts = filteredProducts.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
       } else {
         // Default sorting is by the latest products (original sorting).
