@@ -681,18 +681,26 @@ exports.getProductsByCategoryId = async (req, res) => {
     const count = await products.length;
     const totalPages = Math.ceil(count / limit);
     const individualCat = await Category.findOne({ _id: id });
-
+    console.log("pincodeData ", pincodeData)
     if (!individualCat) {
       return res.status(404).json({ message: "Category not found" });
     }
 
     // Check if pincodeData is provided
-    if (pincodeData) {
+    if (!pincodeData) {
+      console.log("products ", products.length)
+      res.status(200).json({
+        products,
+        categoryId: id,
+        pageTitle: individualCat?.name,
+        pagination: { currentPage: page, totalPages, totalItems: count },
+      });
+    } else {
       // Filter products by pincodeData
       const filteredProducts = products.filter((product) =>
         product.pincode.includes(pincodeData)
       );
-  
+
 
       if (filteredProducts.length > 0) {
         res.status(200).json({
@@ -707,14 +715,9 @@ exports.getProductsByCategoryId = async (req, res) => {
           pageTitle: individualCat?.name,
         });
       }
-    } else {
-      // If pincodeData is not provided, return all products
-      res.status(200).json({
-        products,
-        categoryId: id,
-        pageTitle: individualCat?.name,
-        pagination: { currentPage: page, totalPages, totalItems: count },
-      });
+
+
+
     }
   } catch (err) {
     res.status(500).json({ message: err.message });
