@@ -10,12 +10,12 @@ const router = express.Router();
 router.post(
   "/user/cart/addtocart",
   requireSignin,
-  userMiddleware,
+  //userMiddleware,
   addItemToCart
 );
 //router.post('/user/cart/addToCartByLogin', requireSignin, userMiddleware, addToCart);
 
-router.post("/user/cart/getCartItems", requireSignin, userMiddleware, getCartItems);
+router.post("/user/cart/getCartItems", requireSignin, getCartItems);
 
 //new update
 router.post(
