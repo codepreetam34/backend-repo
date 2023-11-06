@@ -11,7 +11,6 @@ function runUpdate(condition, updateData) {
 }
 
 exports.addItemToCart = (req, res) => {
-
   Cart.findOne({ user: req.user._id }).exec((error, cart) => {
     // console.log("item",cart)
     if (error) return res.status(400).json({ error });
@@ -20,7 +19,6 @@ exports.addItemToCart = (req, res) => {
       let promiseArray = [];
 
       req.body.cartItems.forEach((cartItem) => {
-
         const product = cartItem.product;
         const item = cart.cartItems.find((c) => c.product == product);
 
@@ -54,7 +52,7 @@ exports.addItemToCart = (req, res) => {
 
       Promise.all(promiseArray)
         .then((response) => {
-          res.status(201).json({ response })
+          res.status(201).json({ response });
         })
         .catch((error) => res.status(400).json({ error }));
     } else {
@@ -63,7 +61,6 @@ exports.addItemToCart = (req, res) => {
       const cart = new Cart({
         user: req.user._id,
         cartItems: req.body.cartItems,
-
       });
       //      console.log("cart ",cart)
       cart.save((error, cart) => {
@@ -76,13 +73,15 @@ exports.addItemToCart = (req, res) => {
   });
 };
 
-
 exports.getCartItems = (req, res) => {
   //const { user } = req.body.payload;
   //if(user){
   //console.log(req.user._id );
   Cart.findOne({ user: req.user._id })
-    .populate("cartItems.product", "_id name discountPrice offer deliveryDay actualPrice productPictures")
+    .populate(
+      "cartItems.product",
+      "_id name discountPrice offer deliveryDay actualPrice productPictures"
+    )
     .exec((error, cart) => {
       // console.log("item 2",cart)
       if (error) return res.status(400).json({ error });
@@ -93,12 +92,11 @@ exports.getCartItems = (req, res) => {
             _id: item.product._id.toString(),
             name: item.product.name,
             img: item.product.productPictures[0].img,
-            price: item.product.actualPrice,
+            actualPrice: item.product.actualPrice,
             discountPrice: item.product.discountPrice,
             offer: item.product.offer,
             deliveryDay: item.product.deliveryDay,
             qty: item.quantity,
-
           };
         });
         res.status(200).json({ cartItems });
