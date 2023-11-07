@@ -24,6 +24,7 @@ const addressRoutes = require("./routes/address");
 const orderRoutes = require("./routes/order");
 const adminOrderRoute = require("./routes/admin/order.routes");
 const tagsRoute = require("./routes/tags");
+const couponRoute = require("./routes/coupon");
 
 //environment variable or constants
 dotenv.config();
@@ -51,6 +52,7 @@ app.use("/api", adminOrderRoute);
 app.use("/api", homepageBannerRoutes);
 app.use("/api", Slider);
 app.use("/api", tagsRoute);
+app.use("/api", couponRoute);
 
 app.use(notFound);
 app.use(errorHandler);
