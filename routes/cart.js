@@ -21,7 +21,6 @@ router.post("/user/cart/getCartItems", requireSignin, getCartItems);
 router.post(
   "/user/cart/removeItem",
   requireSignin,
-  userMiddleware,
   removeCartItems
 );
 

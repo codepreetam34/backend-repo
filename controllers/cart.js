@@ -109,7 +109,7 @@ exports.getCartItems = (req, res) => {
 
 exports.removeCartItems = (req, res) => {
   const { productId } = req.body;
-  // console.log(req.user._id );
+  console.log(productId);
   if (productId) {
     Cart.updateOne(
       { user: req.user._id },
