@@ -39,16 +39,28 @@ exports.requestVerifyEmail = async (req, res) => {
     },
     "./template/requestVerifyEmail.handlebars"
   );
-
+  verifyEmailViaOtp(req, res);
   return res.status(201).json({
     link,
   });
 };
 
+
+
 exports.verifyEmailViaOtp = async (req, res) => {
   const { otp, id } = req.body;
-  console.log(otp, parseInt(req.app.locals.OTP));
+  console.log("OTP from request:", otp);
+  console.log("OTP from locals:", req.app.locals.OTP);
+  // 
+  // if (parseInt(req.app.locals.OTP) === parseInt(otp)) {
+  if (req.app.locals.OTP === undefined) {
+    return res.status(400).send({ error: "OTP not set" });
+  }
+
+
   if (parseInt(req.app.locals.OTP) === parseInt(otp)) {
+
+
     req.app.locals.OTP = null; // reset the otp
 
     await User.updateOne(
@@ -75,7 +87,9 @@ exports.verifyEmailViaOtp = async (req, res) => {
       user: user,
     });
   }
-  return res.status(400).send({ error: "Invalid OTP" });
+  else {
+    return res.status(400).send({ error: "Invalid OTP format" });
+  }
 };
 
 exports.createResetSession = async (req, res) => {
