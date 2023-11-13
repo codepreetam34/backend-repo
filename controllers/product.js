@@ -566,7 +566,7 @@ exports.updateProducts = async (req, res) => {
 
 exports.getProductsBySorting = async (req, res) => {
   try {
-    const { sort, categoryId, pageInfo, tagName } = req.body;
+    const { sort, categoryId, pageInfo, tagName, pincodeData } = req.body;
 
     const products = await Product.find({ category: categoryId });
 
@@ -575,8 +575,16 @@ exports.getProductsBySorting = async (req, res) => {
     if (!individualCat) {
       return res.status(404).json({ message: "Category not found" });
     }
+
+    let filteredProd = products;
+    if (pincodeData) {
+      filteredProd = filteredProd.filter((product) => product.pincode.includes(pincodeData));
+    }
+
+    // Step 3: Filter products by tagName
+
     if (pageInfo == "productPage") {
-      const filteredProducts = products.filter((product) => {
+      const filteredProducts = filteredProd.filter((product) => {
         return product.tags.some((tag) => tag.names.includes(tagName));
       });
 
@@ -609,7 +617,7 @@ exports.getProductsBySorting = async (req, res) => {
 
       if (products) {
         if (tagName) {
-          const filteredProducts = products.filter((product) => {
+          const filteredProducts = filteredProd.filter((product) => {
             return product.tags.some((tag) => tag.names.includes(tagName));
           });
 
@@ -638,16 +646,16 @@ exports.getProductsBySorting = async (req, res) => {
 
           let sortedProducts;
           if (sort === 'Low to High') {
-            sortedProducts = products.slice().sort((a, b) => a.discountPrice - b.discountPrice);
+            sortedProducts = filteredProd.slice().sort((a, b) => a.discountPrice - b.discountPrice);
           } else if (sort === 'High to Low') {
-            sortedProducts = products.slice().sort((a, b) => b.discountPrice - a.discountPrice);
+            sortedProducts = filteredProd.slice().sort((a, b) => b.discountPrice - a.discountPrice);
           } else if (sort === 'New to Old') {
-            sortedProducts = products.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            sortedProducts = filteredProd.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
           } else if (sort === 'Old to New') {
-            sortedProducts = products.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+            sortedProducts = filteredProd.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
           } else {
             // Default sorting is by the latest products (original sorting).
-            sortedProducts = products;
+            sortedProducts = filteredProd;
           }
 
           return res.status(200).json({
@@ -683,7 +691,7 @@ exports.getProductsByCategoryId = async (req, res) => {
     const individualCat = await Category.findOne({ _id: id });
     if (!individualCat) {
       return res.status(404).json({ message: "Category not found" });
-    } 
+    }
 
     // Check if pincodeData is provided
     if (!pincodeData) {
@@ -785,3 +793,37 @@ exports.getProductsByTag = async (req, res) => {
   }
 };
 
+exports.getProductsByTopCategory = async (req, res) => {
+  try {
+    const product = await Product.find({}).sort({ _id: -1 });
+    const products = await createProducts(product);
+    const filteredProducts = products.filter((product) =>
+      product.tags.some((tag) => tag.names.includes("Top Category"))
+    );
+    if (products) {
+      res.status(200).json({ products: filteredProducts });
+    } else {
+      return res.status(400).json({ error: 'No products found' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+exports.getProductsByBestSeller = async (req, res) => {
+  try {
+    const product = await Product.find({}).sort({ _id: -1 });
+    const products = await createProducts(product);
+    const filteredProducts = products.filter((product) =>
+      product.tags.some((tag) => tag.names.includes("Best Seller"))
+    );
+    if (products) {
+      res.status(200).json({ products: filteredProducts });
+    } else {
+      return res.status(400).json({ error: 'No products found' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

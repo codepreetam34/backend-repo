@@ -1,6 +1,6 @@
 // razorpayController.js
 const Razorpay = require("razorpay");
-//const Order = require("../models/orderModel"); // Import your Order model
+// const Order = require("../models/orderModel"); // Import your Order model
 
 const razorpay = new Razorpay({
   key_id: 'rzp_test_lUsErTdW0CPEb7',

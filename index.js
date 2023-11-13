@@ -26,7 +26,11 @@ const adminOrderRoute = require("./routes/admin/order.routes");
 const tagsRoute = require("./routes/tags");
 const couponRoute = require("./routes/coupon");
 const paymentRoute = require("./routes/payment");
-
+const homepageCarousel = require("./routes/homepageCarousel")
+const homepageCategorySlider = require("./routes/homepageCategorySlider")
+const homepageTwoBanner = require("./routes/homepageTwoBanner")
+const homepageShopByOccasion = require("./routes/homepageShopByOccasion")
+const homepagePamperZone = require("./routes/homepagePamperZone")
 //environment variable or constants
 dotenv.config();
 
@@ -55,6 +59,11 @@ app.use("/api", Slider);
 app.use("/api", tagsRoute);
 app.use("/api", couponRoute);
 app.use("/api", paymentRoute);
+app.use("/api", homepageCarousel)
+app.use("/api", homepageCategorySlider)
+app.use("/api", homepageTwoBanner)
+app.use("/api", homepageShopByOccasion)
+app.use("/api", homepagePamperZone)
 
 app.use(notFound);
 app.use(errorHandler);
