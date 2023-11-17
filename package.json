@@ -16,6 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.1474.0",
+    "axios": "^1.6.2",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.20.1",
     "concurrently": "^5.3.0",
@@ -38,6 +39,7 @@
     "nodemon": "^2.0.20",
     "otp-generator": "^4.0.1",
     "path": "^0.12.7",
+    "paytmchecksum": "^1.5.1",
     "razorpay": "^2.9.2",
     "shortid": "^2.2.16",
     "slugify": "^1.6.5",
