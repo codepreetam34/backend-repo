@@ -679,8 +679,6 @@ exports.getProductsByCategoryId = async (req, res) => {
   const { id, pincodeData } = req.body;
   const limit = parseInt(req.query.limit) || 20; // Set a default of 10 items per page
   const page = parseInt(req.query.page) || 1; // Set a default page number of 1
-
-
   try {
     const products = await Product.find({ category: id })
       .sort({ _id: -1 })
