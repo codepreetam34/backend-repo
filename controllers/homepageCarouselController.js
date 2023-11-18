@@ -1,8 +1,6 @@
 const Banner = require("../models/homepageCarousel");
 const shortid = require("shortid");
 const slugify = require("slugify");
-const path = require("path");
-const fs = require("fs");
 const AWS = require("aws-sdk");
 
 const s3 = new AWS.S3({

@@ -1,72 +1,146 @@
 const Banner = require("../models/homepageBanner");
 const shortid = require("shortid");
 const slugify = require("slugify");
-const homepageBanner = require("../models/homepageBanner");
+const { S3 } = require("aws-sdk");
 
-exports.createBanner = (req, res) => {
-  const { title, type, createdBy } = req.body;
-  let banners = [];
-  if (req.files.length > 0) {
-    banners = req.files.map((file) => {
-      return { img: process.env.API + "/public/" + file.filename };
-    });
-  }
+// Initialize AWS S3
+const s3 = new S3({
+  endpoint: "https://vibezter-spaces.blr1.digitaloceanspaces.com",
+  accessKeyId: "DO00XDVVVLMUEJCKADRM",
+  secretAccessKey: "SIFlABu43WE1DvoOHi87bmZmykG0ECL+6t5+O+qBacU",
+  s3ForcePathStyle: true,
+});
 
-  const banner = new Banner({
-    title: title,
-    type: type,
-    slug: slugify(title),
-    banners,
-    createdBy: req.user._id,
-  });
-  banner.save((error, banner) => {
-    if (error) return res.status(400).json({ error });
-    if (banner) {
-      res.status(201).json({ banner, files: req.files });
+exports.createBanner = async (req, res) => {
+  try {
+    const { title, imageAltText } = req.body;
+
+    let banner = "";
+
+
+    if (req.file) {
+      const fileContent = req.file.buffer;
+      const filename = shortid.generate() + "-" + req.file.originalname;
+      const uploadParams = {
+        Bucket: "vibezter-spaces",
+        Key: filename,
+        Body: fileContent,
+        ACL: "public-read",
+      };
+      const uploadedFile = await s3.upload(uploadParams).promise();
+      banner = uploadedFile.Location;
     }
-  });
+
+    const bannerData = new Banner({
+      title: title,
+      slug: slugify(title),
+      banner,
+      imageAltText,
+      createdBy: req.user._id,
+    });
+    bannerData.save((error, bannerImage) => {
+      if (error) return res.status(400).json({ message: error.message });
+      if (bannerImage) {
+        res.status(201).json({ banners: bannerImage, files: req.files, message: "Banner has been added successfully" });
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.updateBanner = async (req, res) => {
+  try {
+    const { _id, title, imageAltText } = req.body;
+
+    const bannerData = {
+      createdBy: req.user._id,
+    };
+
+    if (req.file) {
+      const fileContent = req.file.buffer;
+      const filename = shortid.generate() + "-" + req.file.originalname;
+      const uploadParams = {
+        Bucket: "vibezter-spaces",
+        Key: filename,
+        Body: fileContent,
+        ACL: "public-read",
+      };
+      const uploadedFile = await s3.upload(uploadParams).promise();
+      bannerData.banner = uploadedFile.Location;
+    }
+
+    if (title != undefined) {
+      bannerData.title = title;
+      bannerData.slug = slugify(title);
+    }
+
+    if (imageAltText != undefined) {
+      bannerData.imageAltText = imageAltText;
+    }
+    const updatedBanner = await Banner.findOneAndUpdate({ _id }, bannerData, {
+      new: true,
+    });
+    return res.status(201).json({ updatedBanner, message: "Banner has been updated successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 exports.getBannersBySlug = (req, res) => {
-  const { slug } = req.params;
-  //console.log(slug)
-  Banner.findOne({ slug: slug })
-    .select("_id banners title slug type")
-    .exec((error, banner) => {
-      if (error) {
-        return res.status(400).json({ error });
-      } else {
-        res.status(200).json({ banner });
-      }
-    });
+  try {
+    const { slug } = req.params;
+    //console.log(slug)
+    Banner.findOne({ slug: slug })
+      .select("_id banners title slug type")
+      .exec((error, banner) => {
+        if (error) {
+          return res.status(400).json({ error });
+        } else {
+          res.status(200).json({ banner });
+        }
+      });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 exports.getBannerById = (req, res) => {
-  const { bannerId } = req.params;
-  if (bannerId) {
-    Banner.findOne({ _id: bannerId }).exec((error, banner) => {
-      if (error) return res.status(400).json({ error });
-      if (banner) {
-        res.status(200).json({ banner });
-      }
-    });
-  } else {
-    return res.status(400).json({ error: "Params required" });
+  try {
+    const { bannerId } = req.params;
+    if (bannerId) {
+      Banner.findOne({ _id: bannerId }).exec((error, banner) => {
+        if (error) return res.status(400).json({ error });
+        if (banner) {
+
+          res.status(200).json({ banner });
+        }
+      });
+    } else {
+      return res.status(400).json({ message: "Params required" });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
 // new update
 exports.deleteBannerById = (req, res) => {
-  const { bannerId } = req.body.payload;
-  if (bannerId) {
-    Banner.deleteOne({ _id: bannerId }).exec((error, result) => {
-      if (error) return res.status(400).json({ error });
-      if (result) {
-        res.status(202).json({ result });
-      }
-    });
-  } else {
-    res.status(400).json({ error: "Params required" });
+  try {
+    const { bannerId } = req.body;
+    console.log(req.body)
+    if (bannerId) {
+      Banner.deleteOne({ _id: bannerId }).exec((error, result) => {
+        if (error) return res.status(400).json({ error });
+        if (result) {
+          res.status(202).json({ message: "Banner has been deleted successfully" });
+        }
+      });
+    } else {
+      res.status(400).json({ message: "Banner Id is required" });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -75,13 +149,13 @@ exports.getBanners = async (req, res) => {
   const page = parseInt(req.query.page) || 1; // Set a default page number of 1
 
   try {
-    const banners = await homepageBanner
+    const banners = await Banner
       .find({})
       .sort({ _id: -1 })
       .limit(limit)
       .skip(limit * page - limit);
 
-    const count = await homepageBanner.countDocuments().exec();
+    const count = await Banner.countDocuments().exec();
     const totalPages = Math.ceil(count / limit);
 
     if (banners) {
@@ -90,7 +164,7 @@ exports.getBanners = async (req, res) => {
         pagination: { currentPage: page, totalPages, totalItems: count },
       });
     } else {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ message: error.message });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });

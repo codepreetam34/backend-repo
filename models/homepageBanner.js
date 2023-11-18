@@ -6,17 +6,13 @@ const homepageBannerSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    type: {
-      type: String,
-      required: true,
-      unique: true,
-    },
     slug: {
       type: String,
       required: true,
       unique: true,
     },
-    banners: [{ img: { type: String } }],
+    banner: { type: String },
+    imageAltText: { type: String },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

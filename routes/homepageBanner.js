@@ -1,9 +1,8 @@
 const express = require("express");
-//const {  } = require('../controller/category');
 const {
   requireSignin,
   adminMiddleware,
-  // uploadS3,
+  upload,
 } = require("../common-middleware");
 
 const {
@@ -12,29 +11,16 @@ const {
   getBannersBySlug,
   deleteBannerById,
   getBanners,
+  updateBanner,
 } = require("../controllers/homepageBanner");
 
-const multer = require("multer");
-const shortid = require("shortid");
-const path = require("path");
 const router = express.Router();
-
-const storage = multer.diskStorage({
-  destination: function (req, file, callback) {
-    callback(null, path.join(path.dirname(__dirname),'uploads'));
-  },
-  filename: function (req, file, callback) {
-    callback(null, shortid.generate() + "-" + file.originalname);
-  },
-});
-const upload = multer({ storage: storage });
 
 router.post(
   "/banner/create",
   requireSignin,
   adminMiddleware,
-  // uploadS3.array("productPicture"),
-  upload.array('banner'),
+  upload.single('banner'),
   createBanner
 );
 
@@ -42,8 +28,8 @@ router.get("/banner/:id", getBannerById);
 
 router.get("/banners/:slug", getBannersBySlug);
 
-router.delete(
-  "/banner/deleteBannerById",
+router.post(
+  "/banner/delete",
   requireSignin,
   adminMiddleware,
   deleteBannerById
@@ -52,6 +38,14 @@ router.delete(
 router.post(
   "/banner/getBanners",
    getBanners
+);
+
+router.patch(
+  "/banner/update",
+  requireSignin,
+  adminMiddleware,
+  upload.single("banner"),
+  updateBanner
 );
 
 module.exports = router;
