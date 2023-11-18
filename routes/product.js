@@ -4,6 +4,7 @@ const {
   requireSignin,
   adminMiddleware,
   upload,
+  userMiddleware,
   // uploadS3,
 } = require("../common-middleware");
 
@@ -56,6 +57,6 @@ router.patch(
   updateProducts
 );
 
-router.post("/product/:id/reviews", requireSignin, createProductReview);
+router.post("/product/:id/reviews", requireSignin, userMiddleware, createProductReview);
 
 module.exports = router;

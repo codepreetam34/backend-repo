@@ -13,9 +13,9 @@ exports.signup = (req, res) => {
     User.estimatedDocumentCount(async (err, count) => {
       if (err) return res.status(400).json({ error });
       let role = "admin";
-      // if (count === 0) {
-      //   role = "super-admin";
-      // }
+      if (count === 0) {
+        role = "super-admin";
+      }
 
       const { firstName, lastName, email, password } = req.body;
       const hash_password = await bcrypt.hash(password, 10);
@@ -31,11 +31,16 @@ exports.signup = (req, res) => {
       _user.save((error, data) => {
         if (error) {
           return res.status(400).json({
-            message: "Something went wrong",
+            message: "Something went wrong", error,
           });
         }
 
         if (data) {
+          if (data.role === "super-admin") {
+            return res.status(201).json({
+              message: "Super Admin created Successfully..!",
+            });
+          }
           return res.status(201).json({
             message: "Admin created Successfully..!",
           });
