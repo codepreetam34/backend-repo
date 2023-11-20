@@ -18,7 +18,7 @@ exports.createBanner = async (req, res) => {
             const fileContent = req.file.buffer;
             const filename = shortid.generate() + "-" + req.file.originalname;
             const uploadParams = {
-                Bucket: "colston-images", // Replace with your DigitalOcean Spaces bucket name
+                Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
                 Key: filename,
                 Body: fileContent,
                 ACL: "public-read",
@@ -31,13 +31,19 @@ exports.createBanner = async (req, res) => {
             banner = uploadedFile.Location;
         }
 
-        const bannerData = new Banner({
-            title: title,
-            slug: slugify(title),
-            banner,
-            imageAltText,
-            createdBy: req.user._id,
-        });
+    // Use shortid to generate a unique identifier
+    const uniqueId = shortid.generate();
+
+    // Combine shortid with slugify for the 'slug' field
+    const slug = `${slugify(title)}-${uniqueId}`;
+
+    const bannerData = new Banner({
+      title: title,
+      slug: slug,
+      banner,
+      imageAltText,
+      createdBy: req.user._id,
+    });
         bannerData.save((error, bannerImage) => {
             if (error) return res.status(400).json({ message: error.message });
             if (bannerImage) {
@@ -156,7 +162,7 @@ exports.updateBanner = async (req, res) => {
             const fileContent = req.file.buffer;
             const filename = shortid.generate() + "-" + req.file.originalname;
             const uploadParams = {
-                Bucket: "colston-images", // Replace with your DigitalOcean Spaces bucket name
+                Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
                 Key: filename,
                 Body: fileContent,
                 ACL: "public-read",
@@ -170,9 +176,13 @@ exports.updateBanner = async (req, res) => {
         }
 
         if (title != undefined) {
+            // Use shortid to generate a unique identifier
+            const uniqueId = shortid.generate();
+            // Combine shortid with slugify for the 'slug' field
+            const slug = `${slugify(title)}-${uniqueId}`;
             bannerData.title = title;
-            bannerData.slug = slugify(title);
-        }
+            bannerData.slug = slug;
+          }
 
         if (imageAltText != undefined) {
             bannerData.imageAltText = imageAltText;

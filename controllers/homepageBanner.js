@@ -82,8 +82,12 @@ exports.updateBanner = async (req, res) => {
     }
 
     if (title != undefined) {
+      // Use shortid to generate a unique identifier
+      const uniqueId = shortid.generate();
+      // Combine shortid with slugify for the 'slug' field
+      const slug = `${slugify(title)}-${uniqueId}`;
       bannerData.title = title;
-      bannerData.slug = slugify(title);
+      bannerData.slug = slug;
     }
 
     if (imageAltText != undefined) {

@@ -20,22 +20,23 @@ exports.createBanner = async (req, res) => {
       const fileContent = req.file.buffer;
       const filename = shortid.generate() + "-" + req.file.originalname;
       const uploadParams = {
-        Bucket: "colston-images", // Replace with your DigitalOcean Spaces bucket name
+        Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
         Key: filename,
         Body: fileContent,
         ACL: "public-read",
       };
-
       // Upload the file to DigitalOcean Spaces
       const uploadedFile = await s3.upload(uploadParams).promise();
-
       // Set the image URL in the bannerImage variable
       banner = uploadedFile.Location;
     }
-
+    // Use shortid to generate a unique identifier
+    const uniqueId = shortid.generate();
+    // Combine shortid with slugify for the 'slug' field
+    const slug = `${slugify(title)}-${uniqueId}`;
     const bannerData = new Banner({
       title: title,
-      slug: slugify(title),
+      slug: slug,
       banner,
       imageAltText,
       createdBy: req.user._id,
@@ -158,7 +159,7 @@ exports.updateBanner = async (req, res) => {
       const fileContent = req.file.buffer;
       const filename = shortid.generate() + "-" + req.file.originalname;
       const uploadParams = {
-        Bucket: "colston-images", // Replace with your DigitalOcean Spaces bucket name
+        Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
         Key: filename,
         Body: fileContent,
         ACL: "public-read",
@@ -172,8 +173,12 @@ exports.updateBanner = async (req, res) => {
     }
 
     if (title != undefined) {
+      // Use shortid to generate a unique identifier
+      const uniqueId = shortid.generate();
+      // Combine shortid with slugify for the 'slug' field
+      const slug = `${slugify(title)}-${uniqueId}`;
       bannerData.title = title;
-      bannerData.slug = slugify(title);
+      bannerData.slug = slug;
     }
 
     if (imageAltText != undefined) {
