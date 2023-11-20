@@ -740,8 +740,15 @@ exports.getProductsByTag = async (req, res) => {
       _id: -1,
     });
 
+    const individualCat = await Category.findOne({ _id: categoryId });
+
     if (allProducts.length <= 0) {
-      return res.status(200).json({ products: [] });
+      return res.status(200).json({ 
+        products: [],        
+        categoryId: categoryId,
+        categoryName: individualCat.name,
+        pageTitle: tagName, 
+      });
     }
 
     // Step 2: Filter products by pincodeData if it's provided
@@ -754,8 +761,6 @@ exports.getProductsByTag = async (req, res) => {
     filteredProducts = filteredProducts.filter((product) =>
       product.tags.some((tag) => tag.names.includes(tagName))
     );
-
-    const individualCat = await Category.findOne({ _id: categoryId });
 
     if (!individualCat) {
       return res.status(404).json({ message: "Category not found" });
