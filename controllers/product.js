@@ -252,7 +252,7 @@ exports.deleteProductById = async (req, res) => {
                 if (result) {
                   res
                     .status(202)
-                    .json({ error: "Product has been deleted successfully" });
+                    .json({ message: "Product has been deleted successfully" });
                 }
               });
             } else {
