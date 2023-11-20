@@ -7,9 +7,7 @@ const homepageBannerSchema = new mongoose.Schema(
       trim: true,
     },
     slug: {
-      type: String,
-      required: true,
-      unique: true,
+      type: String, unique: true,
     },
     banner: { type: String },
     imageAltText: { type: String },

@@ -31,15 +31,27 @@ exports.createBanner = async (req, res) => {
       banner = uploadedFile.Location;
     }
 
+    // Use shortid to generate a unique identifier
+    const uniqueId = shortid.generate();
+
+    // Combine shortid with slugify for the 'slug' field
+    const slug = `${slugify(title)}-${uniqueId}`;
+
     const bannerData = new Banner({
       title: title,
-      slug: slugify(title),
+      slug: slug,
       banner,
       imageAltText,
       createdBy: req.user._id,
     });
+
     bannerData.save((error, bannerImage) => {
-      if (error) return res.status(400).json({ message: error.message });
+      if (error) {
+        if (error.code === 11000) {
+          return res.status(400).json({ message: `Duplicate key error. Slug '${slug}' must be unique.` });
+        }
+        return res.status(400).json({ message: error.message });
+      }
       if (bannerImage) {
         res.status(201).json({ banners: bannerImage, files: req.files, message: "Banner has been added successfully" });
       }
@@ -48,7 +60,6 @@ exports.createBanner = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
 exports.updateBanner = async (req, res) => {
   try {
     const { _id, title, imageAltText } = req.body;
@@ -128,7 +139,6 @@ exports.getBannerById = (req, res) => {
 exports.deleteBannerById = (req, res) => {
   try {
     const { bannerId } = req.body;
-    console.log(req.body)
     if (bannerId) {
       Banner.deleteOne({ _id: bannerId }).exec((error, result) => {
         if (error) return res.status(400).json({ error });
