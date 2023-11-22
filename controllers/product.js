@@ -675,116 +675,84 @@ exports.getProductsBySorting = async (req, res) => {
 };
 
 
+// getProductsByCategoryId
 exports.getProductsByCategoryId = async (req, res) => {
-  const { id, pincodeData } = req.body;
-  const limit = parseInt(req.query.limit) || 20; // Set a default of 10 items per page
-  const page = parseInt(req.query.page) || 1; // Set a default page number of 1
   try {
-    const products = await Product.find({ category: id })
-      .sort({ _id: -1 })
-      .limit(limit)
-      .skip(limit * page - limit);
-    const count = await products.length;
+    const { id, pincodeData } = req.body;
+    const limit = parseInt(req.query.limit) || 20;
+    const page = parseInt(req.query.page) || 1;
+
+    const [products, count] = await Promise.all([
+      Product.find({ category: id }).sort({ _id: -1 }).limit(limit).skip(limit * page - limit),
+      Product.countDocuments({ category: id }),
+    ]);
+
     const totalPages = Math.ceil(count / limit);
     const individualCat = await Category.findOne({ _id: id });
+
     if (!individualCat) {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    // Check if pincodeData is provided
-    if (!pincodeData) {
+    let responseProducts = products;
 
-      res.status(200).json({
-        products,
-        categoryId: id,
-        pageTitle: individualCat?.name,
-        pagination: { currentPage: page, totalPages, totalItems: count },
-      });
-    } else {
-      // Filter products by pincodeData
-      const filteredProducts = products.filter((product) =>
-        product.pincode.includes(pincodeData)
-      );
-
-
-      if (filteredProducts.length > 0) {
-        res.status(200).json({
-          products: filteredProducts,
-          categoryId: id,
-          pageTitle: individualCat?.name,
-          pagination: { currentPage: page, totalPages, totalItems: filteredProducts.length },
-        });
-      } else {
-        res.status(200).json({
-          products: [], categoryId: id,
-          pageTitle: individualCat?.name,
-        });
-      }
-
-
-
+    if (pincodeData) {
+      responseProducts = responseProducts.filter((product) => product.pincode.includes(pincodeData));
     }
+
+    res.status(200).json({
+      products: responseProducts,
+      categoryId: id,
+      pageTitle: individualCat?.name,
+      pagination: { currentPage: page, totalPages, totalItems: responseProducts.length },
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-
-
+// getProductsByTag
 exports.getProductsByTag = async (req, res) => {
   try {
     const { categoryId, tagName, sort, pincodeData } = req.body;
-
-    // Step 1: Fetch all products in the category
-    const allProducts = await Product.find({ category: categoryId }).sort({
-      _id: -1,
-    });
-
+    const allProducts = await Product.find({ category: categoryId }).sort({ _id: -1 });
     const individualCat = await Category.findOne({ _id: categoryId });
 
-    if (allProducts.length <= 0) {
-      return res.status(200).json({ 
-        products: [],        
+    if (allProducts.length <= 0 || !individualCat) {
+      return res.status(200).json({
+        products: [],
         categoryId: categoryId,
-        categoryName: individualCat.name,
-        pageTitle: tagName, 
+        categoryName: individualCat?.name ? individualCat?.name : "",
+        pageTitle: tagName,
       });
     }
 
-    // Step 2: Filter products by pincodeData if it's provided
     let filteredProducts = allProducts;
+
     if (pincodeData) {
       filteredProducts = filteredProducts.filter((product) => product.pincode.includes(pincodeData));
     }
 
-    // Step 3: Filter products by tagName
     filteredProducts = filteredProducts.filter((product) =>
       product.tags.some((tag) => tag.names.includes(tagName))
     );
 
-    if (!individualCat) {
-      return res.status(404).json({ message: "Category not found" });
-    }
-
     if (filteredProducts) {
-      let sortedProducts;
+      const sortOptions = {
+        'Low to High': 'discountPrice',
+        'High to Low': '-discountPrice',
+        'New to Old': '-updatedAt',
+        'Old to New': 'updatedAt',
+      };
 
-      if (sort === 'Low to High') {
-        sortedProducts = filteredProducts.slice().sort((a, b) => a.discountPrice - b.discountPrice);
-      } else if (sort === 'High to Low') {
-        sortedProducts = filteredProducts.slice().sort((a, b) => b.discountPrice - a.discountPrice);
-      } else if (sort === 'New to Old') {
-        sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-      } else if (sort === 'Old to New') {
-        sortedProducts = filteredProducts.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
-      } else {
-        // Default sorting is by the latest products (original sorting).
-        sortedProducts = filteredProducts;
-      }
+      const sortedProducts = sort ? filteredProducts.slice().sort((a, b) => {
+        const key = sortOptions[sort] || sortOptions['New to Old'];
+        return a[key] - b[key];
+      }) : filteredProducts;
 
-      return res.status(200).json({
+      res.status(200).json({
         categoryId: categoryId,
-        categoryName: individualCat.name,
+        categoryName: individualCat?.name,
         pageTitle: tagName,
         products: sortedProducts,
       });
