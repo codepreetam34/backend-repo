@@ -1,22 +1,20 @@
-const Banner = require("../models/homepageTwoBanner");
+const Banner = require("../models/homepageTwoAdsBanner");
 const shortid = require("shortid");
 const slugify = require("slugify");
-const path = require("path");
-const fs = require("fs");
-const AWS = require("aws-sdk");
+const {
+  s3
+} = require("../common-middleware/index");
 
-const s3 = new AWS.S3({
-  endpoint: new AWS.Endpoint("https://sgp1.digitaloceanspaces.com"), // Replace with your DigitalOcean Spaces endpoint
-  accessKeyId: "DO00DRWTB9KLHRDV4HCB", // Replace with your DigitalOcean Spaces access key ID
-  secretAccessKey: "W2Ar0764cy4Y7rsWCecsoZxOZ3mJTJoqxWBo+uppV/c", // Replace with your DigitalOcean Spaces secret access key
-});
 
 exports.createBanner = async (req, res) => {
   try {
+
     const { title, imageAltText } = req.body;
 
     let banner = "";
+
     if (req.file) {
+
       const fileContent = req.file.buffer;
       const filename = shortid.generate() + "-" + req.file.originalname;
       const uploadParams = {
@@ -25,15 +23,18 @@ exports.createBanner = async (req, res) => {
         Body: fileContent,
         ACL: "public-read",
       };
+
       // Upload the file to DigitalOcean Spaces
       const uploadedFile = await s3.upload(uploadParams).promise();
       // Set the image URL in the bannerImage variable
       banner = uploadedFile.Location;
     }
+
     // Use shortid to generate a unique identifier
     const uniqueId = shortid.generate();
     // Combine shortid with slugify for the 'slug' field
     const slug = `${slugify(title)}-${uniqueId}`;
+
     const bannerData = new Banner({
       title: title,
       slug: slug,
@@ -41,10 +42,11 @@ exports.createBanner = async (req, res) => {
       imageAltText,
       createdBy: req.user._id,
     });
+
     bannerData.save((error, bannerImage) => {
       if (error) return res.status(400).json({ message: error.message });
       if (bannerImage) {
-        res.status(201).json({ banners: bannerImage, files: req.files });
+        res.status(201).json({ banners: bannerImage, files: req.files,message: "Banner has been added successfully" });
       }
     });
   } catch (err) {

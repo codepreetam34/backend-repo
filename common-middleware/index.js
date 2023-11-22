@@ -1,12 +1,14 @@
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const AWS = require("aws-sdk");
+const { S3 } = require("aws-sdk");
 
 // Initialize AWS S3
-const s3 = new AWS.S3({
-  endpoint: new AWS.Endpoint("https://vibezter-spaces.blr1.digitaloceanspaces.com"),
-  accessKeyId: "DO00XDVVVLMUEJCKADRM", // Replace with your DigitalOcean Spaces access key ID
-  secretAccessKey: "SIFlABu43WE1DvoOHi87bmZmykG0ECL+6t5+O+qBacU", // Replace with your DigitalOcean Spaces secret access key
+const s3 = new S3({
+  endpoint: "https://vibezter-spaces.blr1.digitaloceanspaces.com",
+  accessKeyId: "DO00XDVVVLMUEJCKADRM",
+  secretAccessKey: "SIFlABu43WE1DvoOHi87bmZmykG0ECL+6t5+O+qBacU",
+  s3ForcePathStyle: true,
 });
 
 // Set storage engine for multer
@@ -86,4 +88,5 @@ module.exports = {
   localVariable,
   upload,
   uploadField,
+  s3
 };

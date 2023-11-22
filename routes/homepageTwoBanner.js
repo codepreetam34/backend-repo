@@ -17,7 +17,7 @@ const {
 } = require("../controllers/homepageTwoBannerController");
 
 router.post(
-    "/banner/create",
+    "/bannerTwoAds/create",
     requireSignin,
     adminMiddleware,
     upload.single("banner"),
@@ -25,21 +25,21 @@ router.post(
     createBanner
 );
 
-router.get("/banner/:id", getBannerById);
+router.get("/bannerTwoAds/:id", getBannerById);
 
-router.get("/banners/:slug", getBannersBySlug);
+router.get("/bannerTwoAds/:slug", getBannersBySlug);
 
 router.post(
-    "/banner/deleteBannerById",
+    "/bannerTwoAds/deleteBannerById",
     requireSignin,
     adminMiddleware,
     deleteBannerById
 );
 
-router.post("/banner/getBanners", getBanners);
+router.post("/bannerTwoAds/getBanners", getBanners);
 
 router.patch(
-    "/banner/update",
+    "/bannerTwoAds/update",
     requireSignin,
     adminMiddleware,
     upload.single("banner"),

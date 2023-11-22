@@ -46,9 +46,6 @@ app.use(express.urlencoded({ extended: false }));
 
 const welcomeMessage = "<h1 style='color: #801317;display:flex;justify-content:center; padding-top:30px';>Welcome to Vibezter Backend! <br/> Author - Preetam Kr.</h1>";
 
-app.use("/", (req, res) => {
-  res.status(200).send(welcomeMessage);
-});
 app.use("/api", authRoutes);
 app.use("/api", adminRoutes);
 app.use("/api", categoryRoutes);
@@ -69,6 +66,7 @@ app.use("/api", homepageCategorySlider)
 app.use("/api", homepageTwoBanner)
 app.use("/api", homepageShopByOccasion)
 app.use("/api", homepagePamperZone)
+
 
 app.use(notFound);
 app.use(errorHandler);

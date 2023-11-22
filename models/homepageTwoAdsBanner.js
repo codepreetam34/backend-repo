@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const homepageTwoBannerSchema = new mongoose.Schema(
+const homepageTwoAdsBannerSchema = new mongoose.Schema(
   {
     title: {
       type: String,
@@ -25,4 +25,4 @@ const homepageTwoBannerSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("HomepageTwoBanner", homepageTwoBannerSchema);
+module.exports = mongoose.model("HomepageTwoAdsBanner", homepageTwoAdsBannerSchema);
