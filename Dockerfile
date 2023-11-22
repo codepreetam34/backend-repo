@@ -18,6 +18,6 @@ EXPOSE 5000
 
 # Environment variables for connecting to the MongoDB instance
 ENV NODE_ENV=production
-ENV MONGODB_URI="mongodb+srv://preetamwebgross:learn2progress@productapi.oskurj7.mongodb.net/product?retryWrites=true&w=majority"
+ENV MONGODB_URI="mongodb+srv://doadmin:u6203oTH47laBM51@db-mongodb-blr1-16593-790b3026.mongo.ondigitalocean.com/admin?tls=true&authSource=admin"
 # Command to start the backend service
 CMD ["npm", "start"]
