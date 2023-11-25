@@ -784,15 +784,21 @@ exports.getProductsByTopCategory = async (req, res) => {
 
 exports.getProductsByBestSeller = async (req, res) => {
   try {
-    const product = await Product.find({}).sort({ _id: -1 });
-    const products = await createProducts(product);
-    const filteredProducts = products.filter((product) =>
-      product.tags.some((tag) => tag.names.includes("Best Seller"))
+    // Fetch all products and sort them by _id in descending order
+    const allProducts = await Product.find({}).sort({ _id: -1 });
+
+    // Assuming createProducts is a function to format the products
+    const formattedProducts = await createProducts(allProducts);
+
+    // Filter products with the "Best Seller" tag
+    const bestSellerProducts = formattedProducts.filter((product) =>
+      product.tags.some((tag) => tag.names.includes("Best Sellers"))
     );
-    if (products) {
-      res.status(200).json({ products: filteredProducts });
+
+    if (bestSellerProducts.length > 0) {
+      res.status(200).json({ products: bestSellerProducts });
     } else {
-      return res.status(400).json({ error: 'No products found' });
+      return res.status(404).json({ error: 'No best-selling products found' });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });

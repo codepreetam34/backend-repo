@@ -5,7 +5,6 @@ const {
   s3
 } = require("../common-middleware/index");
 
-
 exports.createBanner = async (req, res) => {
   try {
 
@@ -46,7 +45,7 @@ exports.createBanner = async (req, res) => {
     bannerData.save((error, bannerImage) => {
       if (error) return res.status(400).json({ message: error.message });
       if (bannerImage) {
-        res.status(201).json({ banners: bannerImage, files: req.files,message: "Banner has been added successfully" });
+        res.status(201).json({ banners: bannerImage, files: req.files, message: "Banner has been added successfully" });
       }
     });
   } catch (err) {

@@ -68,6 +68,15 @@ app.use("/api", homepageShopByOccasion)
 app.use("/api", homepagePamperZone)
 
 
+
+
+app.get("/", (req, res) => {
+  res.send(welcomeMessage);
+});
+app.get("/api", (req, res) => {
+  res.send(welcomeMessage);
+});
+
 app.use(notFound);
 app.use(errorHandler);
 
