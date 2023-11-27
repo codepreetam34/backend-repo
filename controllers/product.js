@@ -422,7 +422,6 @@ exports.updateProducts = async (req, res) => {
       offer,
       _id,
     } = req.body;
-
     let productPictures = [];
 
     if (req.files && req.files.length > 0) {
@@ -524,7 +523,7 @@ exports.updateProducts = async (req, res) => {
     }
 
     if (tags !== undefined) {
-      updateObject.tags = tags;
+      updateObject.tags = JSON.parse(tags);
     }
 
     if (
@@ -548,9 +547,7 @@ exports.updateProducts = async (req, res) => {
       updateObject,
       {
         new: true,
-      }
-    );
-
+      });
     if (updatedProduct) {
       return res.status(200).json({
         updatedProduct,

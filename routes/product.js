@@ -54,7 +54,7 @@ router.post("/product/getProductsBySorting", getProductsBySorting);
 
 router.post("/product/getBestSellerProducts", getProductsByBestSeller);
 
-router.get("/product/getTopCategoryProducts", getProductsByTopCategory);
+router.post("/product/getTopCategoryProducts", getProductsByTopCategory);
 
 router.patch(
   "/product/update",
