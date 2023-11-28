@@ -60,6 +60,7 @@ exports.createBanner = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 exports.updateBanner = async (req, res) => {
   try {
     const { _id, title, imageAltText } = req.body;
@@ -140,16 +141,27 @@ exports.getBannerById = (req, res) => {
 };
 
 // new update
-exports.deleteBannerById = (req, res) => {
+exports.deleteBannerById = async (req, res) => {
   try {
     const { bannerId } = req.body;
     if (bannerId) {
-      Banner.deleteOne({ _id: bannerId }).exec((error, result) => {
-        if (error) return res.status(400).json({ error });
-        if (result) {
-          res.status(202).json({ message: "Banner has been deleted successfully" });
+      const response = await Banner.findOne({ _id: bannerId });
+      if (response) {
+        if (response.banner) {
+          const key = response.banner.split("/").pop();
+          const deleteParams = {
+            Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
+            Key: key,
+          };
+          await s3.deleteObject(deleteParams).promise();
         }
-      });
+        Banner.deleteOne({ _id: bannerId }).exec((error, result) => {
+          if (error) return res.status(400).json({ error });
+          if (result) {
+            res.status(202).json({ result, message: "Banner has been deleted successfully" });
+          }
+        });
+      }
     } else {
       res.status(400).json({ message: "Banner Id is required" });
     }
@@ -184,3 +196,5 @@ exports.getBanners = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+

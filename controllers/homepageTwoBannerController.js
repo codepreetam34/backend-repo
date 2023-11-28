@@ -94,28 +94,24 @@ exports.deleteBannerById = async (req, res) => {
     const { bannerId } = req.body;
     if (bannerId) {
       const response = await Banner.findOne({ _id: bannerId });
-
       if (response) {
         if (response.banner) {
           const key = response.banner.split("/").pop();
           const deleteParams = {
-            Bucket: "colston-images", // Replace with your DigitalOcean Spaces bucket name
+            Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
             Key: key,
           };
-
           await s3.deleteObject(deleteParams).promise();
         }
-
-
         Banner.deleteOne({ _id: bannerId }).exec((error, result) => {
           if (error) return res.status(400).json({ error });
           if (result) {
-            res.status(202).json({ result });
+            res.status(202).json({ result, message: "Banner has been deleted successfully" });
           }
         });
       }
     } else {
-      res.status(400).json({ error: "Params required" });
+      res.status(400).json({ message: "Banner Id is required" });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -127,10 +123,10 @@ exports.getBanners = async (req, res) => {
   const page = parseInt(req.query.page) || 1; // Set a default page number of 1
 
   try {
-    const homepageBanner = await Banner.find({})
-      .sort({ _id: -1 })
-      .limit(limit)
-      .skip(limit * page - limit);
+    const homepageBanner = await Banner.find({});
+      // .sort({ _id: -1 })
+      // .limit(limit)
+      // .skip(limit * page - limit);
 
     const count = await Banner.countDocuments().exec();
     const totalPages = Math.ceil(count / limit);

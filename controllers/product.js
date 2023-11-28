@@ -404,8 +404,6 @@ exports.createProductReview = async (req, res) => {
   }
 };
 
-
-
 exports.updateProducts = async (req, res) => {
   try {
     const {

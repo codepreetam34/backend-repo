@@ -11,6 +11,7 @@ const s3 = new S3({
   s3ForcePathStyle: true,
 });
 
+
 // Set storage engine for multer
 const storage = multer.memoryStorage(); // Store files in memory for uploading to Spaces
 

@@ -17,7 +17,7 @@ const {
 } = require("../controllers/homepageShopByOccasionController");
 
 router.post(
-    "/banner/create",
+    "/bannerShopByOccasion/create",
     requireSignin,
     adminMiddleware,
     upload.single("banner"),
@@ -25,21 +25,21 @@ router.post(
     createBanner
 );
 
-router.get("/banner/:id", getBannerById);
+router.get("/bannerShopByOccasion/:id", getBannerById);
 
-router.get("/banners/:slug", getBannersBySlug);
+router.get("/bannersShopByOccasion/:slug", getBannersBySlug);
 
 router.post(
-    "/banner/deleteBannerById",
+    "/bannerShopByOccasion/delete",
     requireSignin,
     adminMiddleware,
     deleteBannerById
 );
 
-router.post("/banner/getBanners", getBanners);
+router.post("/bannerShopByOccasion/getBanners", getBanners);
 
 router.patch(
-    "/banner/update",
+    "/bannerShopByOccasion/update",
     requireSignin,
     adminMiddleware,
     upload.single("banner"),
