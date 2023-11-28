@@ -1,41 +1,36 @@
 const Banner = require("../models/homepagePamperZone");
 const shortid = require("shortid");
 const slugify = require("slugify");
-const path = require("path");
-const fs = require("fs");
-const AWS = require("aws-sdk");
+const { S3 } = require("aws-sdk");
 
-const s3 = new AWS.S3({
-  endpoint: new AWS.Endpoint("https://sgp1.digitaloceanspaces.com"), // Replace with your DigitalOcean Spaces endpoint
-  accessKeyId: "DO00DRWTB9KLHRDV4HCB", // Replace with your DigitalOcean Spaces access key ID
-  secretAccessKey: "W2Ar0764cy4Y7rsWCecsoZxOZ3mJTJoqxWBo+uppV/c", // Replace with your DigitalOcean Spaces secret access key
+const s3 = new S3({
+  endpoint: "https://vibezter-spaces.blr1.digitaloceanspaces.com",
+  accessKeyId: "DO00XDVVVLMUEJCKADRM",
+  secretAccessKey: "SIFlABu43WE1DvoOHi87bmZmykG0ECL+6t5+O+qBacU",
+  s3ForcePathStyle: true,
 });
 
 exports.createBanner = async (req, res) => {
   try {
     const { title, imageAltText } = req.body;
-
     let banner = "";
     if (req.file) {
       const fileContent = req.file.buffer;
       const filename = shortid.generate() + "-" + req.file.originalname;
       const uploadParams = {
-        Bucket: "vibezter-spaces",// Replace with your DigitalOcean Spaces bucket name
+        Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
         Key: filename,
         Body: fileContent,
         ACL: "public-read",
       };
-
       // Upload the file to DigitalOcean Spaces
       const uploadedFile = await s3.upload(uploadParams).promise();
-
       // Set the image URL in the bannerImage variable
       banner = uploadedFile.Location;
     }
 
     // Use shortid to generate a unique identifier
     const uniqueId = shortid.generate();
-
     // Combine shortid with slugify for the 'slug' field
     const slug = `${slugify(title)}-${uniqueId}`;
 
@@ -46,14 +41,16 @@ exports.createBanner = async (req, res) => {
       imageAltText,
       createdBy: req.user._id,
     });
+
     bannerData.save((error, bannerImage) => {
       if (error) return res.status(400).json({ message: error.message });
       if (bannerImage) {
-        res.status(201).json({ banners: bannerImage, files: req.files });
+        res.status(201).json({ banners: bannerImage, files: req.files, message: 'Banner has been created successfully' });
       }
     });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err });
   }
 };
 
@@ -85,7 +82,7 @@ exports.getBannerById = (req, res) => {
         }
       });
     } else {
-      return res.status(400).json({ error: "Params required" });
+      return res.status(400).json({ message: "Banner Id is required" });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -98,28 +95,24 @@ exports.deleteBannerById = async (req, res) => {
     const { bannerId } = req.body;
     if (bannerId) {
       const response = await Banner.findOne({ _id: bannerId });
-
       if (response) {
         if (response.banner) {
           const key = response.banner.split("/").pop();
           const deleteParams = {
-            Bucket: "colston-images", // Replace with your DigitalOcean Spaces bucket name
+            Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
             Key: key,
           };
-
           await s3.deleteObject(deleteParams).promise();
         }
-
-
         Banner.deleteOne({ _id: bannerId }).exec((error, result) => {
           if (error) return res.status(400).json({ error });
           if (result) {
-            res.status(202).json({ result });
+            res.status(202).json({ result, message: "Banner has been deleted successfully" });
           }
         });
       }
     } else {
-      res.status(400).json({ error: "Params required" });
+      res.status(400).json({ message: "Banner Id is required" });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -192,7 +185,7 @@ exports.updateBanner = async (req, res) => {
     const updatedBanner = await Banner.findOneAndUpdate({ _id }, bannerData, {
       new: true,
     });
-    return res.status(201).json({ updatedBanner });
+    return res.status(201).json({ updatedBanner, message: "Banner has been updated successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

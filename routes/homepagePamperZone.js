@@ -17,7 +17,7 @@ const {
 } = require("../controllers/homepagePamerZonerController");
 
 router.post(
-    "/banner/create",
+    "/bannerPamperZone/create",
     requireSignin,
     adminMiddleware,
     upload.single("banner"),
@@ -25,21 +25,21 @@ router.post(
     createBanner
 );
 
-router.get("/banner/:id", getBannerById);
+router.get("/bannerPamperZone/:id", getBannerById);
 
-router.get("/banners/:slug", getBannersBySlug);
+router.get("/bannersPamperZone/:slug", getBannersBySlug);
 
 router.post(
-    "/banner/deleteBannerById",
+    "/bannerPamperZone/delete",
     requireSignin,
     adminMiddleware,
     deleteBannerById
 );
 
-router.post("/banner/getBanners", getBanners);
+router.post("/bannerPamperZone/getBanners", getBanners);
 
 router.patch(
-    "/banner/update",
+    "/bannerPamperZone/update",
     requireSignin,
     adminMiddleware,
     upload.single("banner"),
