@@ -123,10 +123,10 @@ exports.getBanners = async (req, res) => {
   const page = parseInt(req.query.page) || 1; // Set a default page number of 1
 
   try {
-    const homepageBanner = await Banner.find({});
-      // .sort({ _id: -1 })
-      // .limit(limit)
-      // .skip(limit * page - limit);
+    const homepageBanner = await Banner.find({})
+      .sort({ _id: -1 })
+      .limit(limit)
+      .skip(limit * page - limit);
 
     const count = await Banner.countDocuments().exec();
     const totalPages = Math.ceil(count / limit);
