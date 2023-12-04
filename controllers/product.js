@@ -423,29 +423,6 @@ exports.updateProducts = async (req, res) => {
     let productPictures = [];
 
     if (req.files && req.files.length > 0) {
-      // if (_id) {
-      //   const response = await Product.findOne({ _id: _id });
-
-      //   if (response) {
-      //     response.productPictures.map(async (banner) => {
-      //       if (banner.img) {
-      //         const key = banner.img.split("/").pop();
-      //         const deleteParams = {
-      //           Bucket: "vibezter-spaces",
-      //           Key: key,
-      //         };
-
-      //         await s3.deleteObject(deleteParams).promise();
-      //       }
-      //     });
-      //   } else {
-      //     return res
-      //       .status(400)
-      //       .json({ error: "Delete operation failed try again" });
-      //   }
-      // } else {
-      //   res.status(400).json({ error: "Params required" });
-      // }
 
       productPictures = await Promise.all(
         req.files.map(async (file, index) => {
@@ -562,7 +539,6 @@ exports.updateProducts = async (req, res) => {
 exports.getProductsBySorting = async (req, res) => {
   try {
     const { sort, categoryId, pageInfo, tagName, pincodeData } = req.body;
-
     const products = await Product.find({ category: categoryId });
 
     const individualCat = await Category.findOne({ _id: categoryId });
@@ -572,6 +548,9 @@ exports.getProductsBySorting = async (req, res) => {
     }
 
     let filteredProd = products;
+    if (!filteredProd) {
+      return res.status(400).json({ error: "Failed to fetch products" });
+    }
     if (pincodeData) {
       filteredProd = filteredProd.filter((product) => product.pincode.includes(pincodeData));
     }
@@ -582,16 +561,48 @@ exports.getProductsBySorting = async (req, res) => {
       const filteredProducts = filteredProd.filter((product) => {
         return product.tags.some((tag) => tag.names.includes(tagName));
       });
-
       if (filteredProducts) {
         let sortedProducts;
-        if (sort === 'Low to High') {
+        if (sort == 'Low to High') {
           sortedProducts = filteredProducts.slice().sort((a, b) => a.discountPrice - b.discountPrice);
-        } else if (sort === 'High to Low') {
+        } else if (sort == 'High to Low') {
           sortedProducts = filteredProducts.slice().sort((a, b) => b.discountPrice - a.discountPrice);
-        } else if (sort === 'New to Old') {
+        } else if (sort == 'New to Old') {
           sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        } else if (sort === 'Old to New') {
+        } else if (sort == 'Old to New') {
+          sortedProducts = filteredProducts.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+        } else {
+          // Default sorting is by the latest products (original sorting).
+          sortedProducts = filteredProducts;
+        }
+        return res.status(200).json({
+          categoryId: categoryId,
+          categoryName: individualCat.name,
+          pageTitle: tagName ? tagName : individualCat.name,
+          tagName: tagName,
+          sortedProducts: sortedProducts,
+        });
+      } else {
+        return res.status(400).json({ error: "Failed to fetch products" });
+      }
+    }
+    else {
+
+
+      if (tagName) {
+        const filteredProducts = filteredProd.filter((product) => {
+          return product.tags.some((tag) => tag.names.includes(tagName));
+        });
+
+
+        let sortedProducts;
+        if (sort == 'Low to High') {
+          sortedProducts = filteredProducts.slice().sort((a, b) => a.discountPrice - b.discountPrice);
+        } else if (sort == 'High to Low') {
+          sortedProducts = filteredProducts.slice().sort((a, b) => b.discountPrice - a.discountPrice);
+        } else if (sort == 'New to Old') {
+          sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        } else if (sort == 'Old to New') {
           sortedProducts = filteredProducts.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
         } else {
           // Default sorting is by the latest products (original sorting).
@@ -601,68 +612,37 @@ exports.getProductsBySorting = async (req, res) => {
         return res.status(200).json({
           categoryId: categoryId,
           categoryName: individualCat.name,
-          pageTitle: tagName,
+          pageTitle: tagName ? tagName : individualCat.name,
+          tagName: tagName,
           sortedProducts: sortedProducts,
         });
       } else {
-        return res.status(400).json({ error: "Failed to fetch products" });
-      }
-    }
-    else {
 
-      if (products) {
-        if (tagName) {
-          const filteredProducts = filteredProd.filter((product) => {
-            return product.tags.some((tag) => tag.names.includes(tagName));
-          });
-
-
-          let sortedProducts;
-          if (sort === 'Low to High') {
-            sortedProducts = filteredProducts.slice().sort((a, b) => a.price - b.price);
-          } else if (sort === 'High to Low') {
-            sortedProducts = filteredProducts.slice().sort((a, b) => b.price - a.price);
-          } else if (sort === 'New to Old') {
-            sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-          } else if (sort === 'Old to New') {
-            sortedProducts = filteredProducts.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
-          } else {
-            // Default sorting is by the latest products (original sorting).
-            sortedProducts = filteredProducts;
-          }
-
-          return res.status(200).json({
-            categoryId: categoryId,
-            categoryName: individualCat.name,
-            pageTitle: tagName,
-            sortedProducts: sortedProducts,
-          });
-        } else {
-
-          let sortedProducts;
-          if (sort === 'Low to High') {
-            sortedProducts = filteredProd.slice().sort((a, b) => a.discountPrice - b.discountPrice);
-          } else if (sort === 'High to Low') {
-            sortedProducts = filteredProd.slice().sort((a, b) => b.discountPrice - a.discountPrice);
-          } else if (sort === 'New to Old') {
-            sortedProducts = filteredProd.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-          } else if (sort === 'Old to New') {
-            sortedProducts = filteredProd.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
-          } else {
-            // Default sorting is by the latest products (original sorting).
-            sortedProducts = filteredProd;
-          }
-
-          return res.status(200).json({
-            categoryId: categoryId,
-            categoryName: individualCat.name,
-            pageTitle: tagName,
-            sortedProducts: sortedProducts,
-          });
+        let sortedProducts;
+        if (sort == 'Low to High') {
+          sortedProducts = filteredProd.slice().sort((a, b) => a.discountPrice - b.discountPrice);
         }
-      } else {
-        return res.status(400).json({ error: "Failed to fetch products" });
+        else if (sort == 'High to Low') {
+          sortedProducts = filteredProd.slice().sort((a, b) => b.discountPrice - a.discountPrice);
+        }
+        else if (sort == 'New to Old') {
+          sortedProducts = filteredProd.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        } else if (sort == 'Old to New') {
+          sortedProducts = filteredProd.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+        } else {
+          // Default sorting is by the latest products (original sorting).
+          sortedProducts = filteredProd;
+        }
+
+        return res.status(200).json({
+          categoryId: categoryId,
+          categoryName: individualCat.name,
+          pageTitle: tagName ? tagName : individualCat.name,
+          tagName: tagName,
+          sortedProducts: sortedProducts,
+        });
       }
+
     }
   } catch (err) {
     return res.status(400).json({ error: "Failed to fetch products" });
@@ -710,7 +690,7 @@ exports.getProductsByCategoryId = async (req, res) => {
 exports.getProductsByTag = async (req, res) => {
   try {
     const { categoryId, tagName, sort, pincodeData } = req.body;
-    const allProducts = await Product.find({ category: categoryId }).sort({ _id: -1 });
+    const allProducts = await Product.find({ category: categoryId });
     const individualCat = await Category.findOne({ _id: categoryId });
 
     if (allProducts.length <= 0 || !individualCat) {
@@ -719,6 +699,7 @@ exports.getProductsByTag = async (req, res) => {
         categoryId: categoryId,
         categoryName: individualCat?.name ? individualCat?.name : "",
         pageTitle: tagName,
+        tagName: tagName,
       });
     }
 
@@ -735,20 +716,25 @@ exports.getProductsByTag = async (req, res) => {
     if (filteredProducts) {
       const sortOptions = {
         'Low to High': 'discountPrice',
-        'High to Low': '-discountPrice',
-        'New to Old': '-updatedAt',
+        'High to Low': 'discountPrice',
+        'New to Old': 'updatedAt',
         'Old to New': 'updatedAt',
       };
 
-      const sortedProducts = sort ? filteredProducts.slice().sort((a, b) => {
-        const key = sortOptions[sort] || sortOptions['New to Old'];
-        return a[key] - b[key];
-      }) : filteredProducts;
+      const sortedProducts = sort
+        ? filteredProducts.slice().sort((a, b) => {
+          const key = sortOptions[sort] || sortOptions['New to Old'];
+          return sort === 'High to Low'
+            ? b[key] - a[key]
+            : a[key] - b[key];
+        })
+        : filteredProducts;
 
       res.status(200).json({
         categoryId: categoryId,
         categoryName: individualCat?.name,
         pageTitle: tagName,
+        tagName: tagName,
         products: sortedProducts,
       });
     } else {
