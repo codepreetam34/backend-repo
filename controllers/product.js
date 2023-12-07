@@ -443,7 +443,7 @@ exports.getProductReview = async (req, res) => {
     // Extract the user's review for the product
     const userReview = productWithUserReview.reviews.find((review) => review.user.equals(userId));
 
-    return res.status(200).json({ userReview, message: "Product already reviewed", purchased: true });
+    return res.status(200).json({ userReview, message: "Product already reviewed !", purchased: true });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
