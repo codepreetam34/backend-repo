@@ -21,6 +21,7 @@ const {
   getProductsBySorting,
   getProductsByBestSeller,
   getProductsByTopCategory,
+  checkProductPurchase,
 } = require("../controllers/product");
 const router = express.Router();
 
@@ -65,5 +66,6 @@ router.patch(
 );
 
 router.post("/product/:id/reviews", requireSignin, userMiddleware, createProductReview);
+router.get("/checkProductPurchase/:productId", requireSignin, userMiddleware, checkProductPurchase);
 
 module.exports = router;

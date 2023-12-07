@@ -1,9 +1,10 @@
 const Product = require("../models/product");
-const shortid = require("shortid");
-const slugify = require("slugify");
+const Order = require('../models/order');
 const Category = require("../models/category");
 let sortBy = require("lodash.sortby");
 const { S3 } = require("aws-sdk");
+const shortid = require("shortid");
+const slugify = require("slugify");
 
 // Initialize AWS S3
 const s3 = new S3({
@@ -359,49 +360,73 @@ exports.getProducts = async (req, res) => {
 };
 
 exports.createProductReview = async (req, res) => {
-  const { rating, comment, name } = req.body;
+  try {
+    const { rating, comment, name } = req.body;
 
-  if (!name) {
-    return res.status(400).json({ error: "name is required" });
-  }
-  if (!rating) {
-    return res.status(400).json({ error: "rating is required" });
-  }
-  if (!comment) {
-    return res.status(400).json({ error: "comment is required" });
-  }
-
-  const product = await Product.findById(req.params.id);
-
-  if (product) {
-    const alreadyReviewed = product.reviews.find((r) => {
-      return r.user.toString() === req.user._id.toString();
-    });
-
-    if (alreadyReviewed) {
-      return res.status(400).json({ error: "Product already reviewed" });
+    if (!name || !rating || !comment) {
+      return res.status(400).json({ message: "name, rating, and comment are required" });
     }
 
-    const review = {
-      name: name,
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found."
+      });
+    }
+
+    const alreadyReviewed = product.reviews.find((r) => r.user.toString() === req.user._id.toString());
+
+    if (alreadyReviewed) {
+      return res.status(400).json({ message: "Product already reviewed" });
+    }
+
+    const newReview = {
+      name,
       rating: Number(rating),
       comment,
       user: req.user._id,
     };
 
-    product.reviews.push(review);
+    product.reviews.push(newReview);
 
+    const totalRating = product.reviews.reduce((acc, item) => acc + item.rating, 0);
     product.numReviews = product.reviews.length;
-
-    product.rating =
-      product.reviews.reduce((acc, item) => item.rating + acc, 0) /
-      product.reviews.length;
+    product.rating = totalRating / product.numReviews;
 
     await product.save();
-    res.status(201).json({ message: "Review added" });
-  } else {
-    res.status(404).json({ message: "Product not found" });
+
+    return res.status(201).json({ message: "Review added" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
+};
+exports.checkProductPurchase = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.productId);
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // Check if the user has purchased the product
+    const userOrder = await Order.findOne({
+      user: req.user._id,
+      'items.productId': req.params.productId,
+      paymentStatus: 'completed',
+    });
+
+    if (userOrder) {
+      return res.status(200).json({ purchased: true, message: 'You have purchased the product.' });
+    } else {
+      return res.status(200).json({ purchased: false, message: 'You have not purchased the product.' });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+
 };
 
 exports.updateProducts = async (req, res) => {
@@ -649,7 +674,6 @@ exports.getProductsBySorting = async (req, res) => {
   }
 };
 
-
 // getProductsByCategoryId
 exports.getProductsByCategoryId = async (req, res) => {
   try {
@@ -761,7 +785,6 @@ exports.getProductsByTopCategory = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
 
 exports.getProductsByBestSeller = async (req, res) => {
   try {

@@ -5,11 +5,11 @@ const Coupon = require("../models/coupon");
 exports.applyCoupon = async (req, res) => {
     try {
         const { code } = req.body;
-        
+
         const coupon = await Coupon.findOne({ code });
-        
+
         if (coupon) {
-            res.json({ discount: coupon.discount });
+            res.json({ discount: coupon.discount, message: 'Coupon has been applied',couponCode:code });
         } else {
             res.status(404).json({ error: "Coupon not found" });
         }
