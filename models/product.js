@@ -2,9 +2,10 @@ const mongoose = require("mongoose");
 
 const reviewSchema = mongoose.Schema(
   {
-    name: { type: String},
-    rating: { type: Number},
-    comment: { type: String},
+    name: { type: String },
+    rating: { type: Number },
+    comment: { type: String },
+    image: { type: String },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -89,14 +90,6 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-
-    // reviews: { type: String },
-    // reviews: [
-    //   {
-    //     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    //     review: String,
-    //   },
-    // ],
 
     category: {
       type: mongoose.Schema.Types.ObjectId,

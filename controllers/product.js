@@ -367,28 +367,49 @@ exports.createProductReview = async (req, res) => {
       return res.status(400).json({ message: "name, rating, and comment are required" });
     }
 
-    const product = await Product.findById(req.params.id);
+    let image = '';
+    if (req.file) {
+      const fileContent = req.file.buffer;
+      const filename = shortid.generate() + "-" + req.file.originalname;
+      const uploadParams = {
+        Bucket: "vibezter-spaces",
+        Key: filename,
+        Body: fileContent,
+        ACL: "public-read",
+      };
+      const uploadedFile = await s3.upload(uploadParams).promise();
+      image = uploadedFile.Location;
+    }
+
+    const product = await Product.findById(req.body.id);
 
     if (!product) {
-      return res.status(404).json({
-        message: "Product not found."
-      });
+      return res.status(404).json({ message: "Product not found." });
     }
 
-    const alreadyReviewed = product.reviews.find((r) => r.user.toString() === req.user._id.toString());
+    const existingReviewIndex = product.reviews.findIndex((r) => r.user.toString() === req.user._id.toString());
 
-    if (alreadyReviewed) {
-      return res.status(400).json({ message: "Product already reviewed" });
+    if (existingReviewIndex !== -1) {
+      // Update the existing review
+      product.reviews[existingReviewIndex] = {
+        name,
+        rating: Number(rating),
+        comment,
+        image,
+        user: req.user._id,
+      };
+    } else {
+      // Add a new review
+      const newReview = {
+        name,
+        rating: Number(rating),
+        comment,
+        image,
+        user: req.user._id,
+      };
+
+      product.reviews.push(newReview);
     }
-
-    const newReview = {
-      name,
-      rating: Number(rating),
-      comment,
-      user: req.user._id,
-    };
-
-    product.reviews.push(newReview);
 
     const totalRating = product.reviews.reduce((acc, item) => acc + item.rating, 0);
     product.numReviews = product.reviews.length;
@@ -396,10 +417,36 @@ exports.createProductReview = async (req, res) => {
 
     await product.save();
 
-    return res.status(201).json({ message: "Review added" });
+    return res.status(201).json({ message: "Review added/updated" });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.getProductReview = async (req, res) => {
+  try {
+
+    const productId = req.body.productId;
+    const userId = req.user._id;
+
+    // Find the product with the specified ID and user's review
+    const productWithUserReview = await Product.findOne({
+      _id: productId,
+      'reviews.user': userId,
+    });
+
+    if (!productWithUserReview) {
+      return res.status(200).json({ message: 'Product or review not found for the user', purchased: false });
+    }
+
+    // Extract the user's review for the product
+    const userReview = productWithUserReview.reviews.find((review) => review.user.equals(userId));
+
+    return res.status(200).json({ userReview, message: "Product already reviewed", purchased: true });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 exports.checkProductPurchase = async (req, res) => {

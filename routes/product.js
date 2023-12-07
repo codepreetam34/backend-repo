@@ -22,6 +22,7 @@ const {
   getProductsByBestSeller,
   getProductsByTopCategory,
   checkProductPurchase,
+  getProductReview
 } = require("../controllers/product");
 const router = express.Router();
 
@@ -65,7 +66,8 @@ router.patch(
   updateProducts
 );
 
-router.post("/product/:id/reviews", requireSignin, userMiddleware, createProductReview);
+router.post("/product/reviews", requireSignin, userMiddleware, upload.single("image"), createProductReview);
+router.post("/product/user/review", requireSignin, userMiddleware, getProductReview);
 router.get("/checkProductPurchase/:productId", requireSignin, userMiddleware, checkProductPurchase);
 
 module.exports = router;
