@@ -635,9 +635,9 @@ exports.getProductsBySorting = async (req, res) => {
       });
       if (filteredProducts) {
         let sortedProducts;
-        if (sort == 'Low to High') {
+        if (sort == 'Price: Low to High') {
           sortedProducts = filteredProducts.slice().sort((a, b) => a.discountPrice - b.discountPrice);
-        } else if (sort == 'High to Low') {
+        } else if (sort == 'Price: High to Low') {
           sortedProducts = filteredProducts.slice().sort((a, b) => b.discountPrice - a.discountPrice);
         } else if (sort == 'New to Old') {
           sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
@@ -668,9 +668,9 @@ exports.getProductsBySorting = async (req, res) => {
 
 
         let sortedProducts;
-        if (sort == 'Low to High') {
+        if (sort == 'Price: Low to High') {
           sortedProducts = filteredProducts.slice().sort((a, b) => a.discountPrice - b.discountPrice);
-        } else if (sort == 'High to Low') {
+        } else if (sort == 'Price: High to Low') {
           sortedProducts = filteredProducts.slice().sort((a, b) => b.discountPrice - a.discountPrice);
         } else if (sort == 'New to Old') {
           sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
@@ -691,10 +691,10 @@ exports.getProductsBySorting = async (req, res) => {
       } else {
 
         let sortedProducts;
-        if (sort == 'Low to High') {
+        if (sort == 'Price: Low to High') {
           sortedProducts = filteredProd.slice().sort((a, b) => a.discountPrice - b.discountPrice);
         }
-        else if (sort == 'High to Low') {
+        else if (sort == 'Price: High to Low') {
           sortedProducts = filteredProd.slice().sort((a, b) => b.discountPrice - a.discountPrice);
         }
         else if (sort == 'New to Old') {
@@ -786,8 +786,8 @@ exports.getProductsByTag = async (req, res) => {
 
     if (filteredProducts) {
       const sortOptions = {
-        'Low to High': 'discountPrice',
-        'High to Low': 'discountPrice',
+        'Price: Low to High': 'discountPrice',
+        'Price: High to Low': 'discountPrice',
         'New to Old': 'updatedAt',
         'Old to New': 'updatedAt',
       };
