@@ -303,7 +303,7 @@ exports.deleteCategories = async (req, res) => {
     if (deletedCategories.length == ids.length) {
       res
         .status(201)
-        .json({ message: "A category has been successfully deleted." });
+        .json({ message: "Category has been successfully deleted." });
     } else {
       res.status(400).json({ message: "Something went wrong" });
     }

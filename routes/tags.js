@@ -16,7 +16,7 @@ const router = express.Router();
 
 router.get("/tags/getTags", getTags);
 
-router.post("/tags/create", requireSignin, adminMiddleware,addTags);
+router.post("/tags/create", requireSignin, adminMiddleware, addTags);
 
 router.get("/tags/:id", getTagsById);
 

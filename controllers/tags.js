@@ -2,7 +2,6 @@ const Tags = require("../models/tags");
 const Category = require("../models/category");
 exports.addTags = async (req, res) => {
   try {
-
     const createdBy = req.user._id;
     const { tagType, categories } = req.body;
     const individualCategory = await Category.findById({ _id: tagType }).exec();
@@ -42,14 +41,28 @@ exports.getTags = async (req, res) => {
 
 exports.updateTags = async (req, res) => {
   try {
-    // Extract the tag ID from the request parameters
-    const tagId = req.params.tagId;
+    const { categories, tagId } = req.body;
 
-    // Sample logic to update tags in the database
-    const updatedTags = await Tags.findByIdAndUpdate(tagId, req.body, { new: true });
+    const tagsArray = categories.map((category) => ({
+      name: category.name,
+      options: category.options,
+    }));
 
-    res.status(200).json({ message: "Tags updated successfully", tags: updatedTags });
+    const updatedTags = await Tags.findOneAndUpdate(
+      { _id: tagId },
+      { categories: tagsArray },
+      {
+        new: true,
+      }
+    );
 
+    if (updatedTags) {
+      return res
+        .status(200)
+        .json({ message: "Tags updated successfully", tags: updatedTags });
+    } else {
+      return res.status(400).json({ message: "Failed to update tags" });
+    }
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -57,14 +70,17 @@ exports.updateTags = async (req, res) => {
 
 exports.deleteTags = async (req, res) => {
   try {
-    // Extract the tag ID from the request parameters
-    const tagId = req.params.tagId;
+    const tagId = req.body.payload;
+    const deletedTag = await Tags.findOneAndDelete({
+      _id: tagId,
+      createdBy: req.user._id,
+    });
 
-    // Sample logic to delete tags from the database
-    await Tags.findByIdAndRemove(tagId);
-
-    res.status(200).json({ message: "Tag deleted successfully" });
-
+    if (deletedTag) {
+      res.status(200).json({ message: "Tag has been successfully deleted." });
+    } else {
+      res.status(400).json({ message: "Something went wrong" });
+    }
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -83,7 +99,6 @@ exports.getTagsById = async (req, res) => {
     }
 
     res.status(200).json({ tag: tag });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
