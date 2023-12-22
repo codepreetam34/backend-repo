@@ -40,28 +40,53 @@ exports.addOrder = (req, res) => {
   });
 };
 
-exports.getOrders = (req, res) => {
-  Order.find({ user: req.user._id })
-    .select("_id paymentStatus paymentType orderStatus items")
-    .populate("items.productId", "_id name productPictures")
-    .sort({ _id: -1 })
-    .exec((error, orders) => {
-      if (error) return res.status(400).json({ error });
-      if (orders) {
-        Address.findOne({
-          user: req.user._id,
-        }).exec((error, address) => {
-          if (error) return res.status(400).json({ error });
-          orders.address = address.address.find(
-            (adr) => adr._id.toString() == orders.addressId.toString()
-          );
-          res.status(200).json({
-            orders,
-          });
-        });
+exports.getOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.user._id })
+      .select("_id paymentStatus paymentType orderStatus items addressId")
+      .populate("items.productId", "_id name productPictures")
+      .sort({ _id: -1 })
+      .exec();
+
+    if (!orders || orders.length === 0) {
+      return res.status(404).json({ error: "No orders found" });
+    }
+
+    try {
+      const address = await Address.findOne({
+        user: req.user._id,
+      });
+
+      if (!address || !address.address) {
+        return res.status(404).json({ error: "Address not found" });
       }
-    });
+
+      // Attach address to each order
+      const ordersWithAddress = orders.map((order) => {
+        const matchingAddress = address.address.find(
+          (adr) => adr._id.toString() === order.addressId.toString()
+        );
+
+        return {
+          ...order._doc,
+          address: matchingAddress || null,
+        };
+      });
+
+      res.status(200).json({
+        orders: ordersWithAddress,
+      });
+    } catch (addressError) {
+      console.error(addressError);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  } catch (catchError) {
+    console.error(catchError);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
+
+
 exports.getAllOrders = async (req, res) => {
   try {
     // Use the `populate` method to retrieve user details for each order
