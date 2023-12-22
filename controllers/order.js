@@ -4,54 +4,81 @@ const Address = require("../models/address");
 const User = require("../models/user");
 
 exports.addOrder = (req, res) => {
-  
-    Cart.deleteOne({ user: req.user._id }).exec((error, result) => {
-      if (error) return res.status(400).json({ error });
-      if (result) {
-        req.body.user = req.user._id;
-        req.body.orderStatus = [
-          {
-            type: "ordered",
-            date: new Date(),
-            isCompleted: true,
-          },
-          {
-            type: "packed",
-            isCompleted: false,
-          },
-          {
-            type: "shipped",
-            isCompleted: false,
-          },
-          {
-            type: "delivered",
-            isCompleted: false,
-          },
-        ];
+  Cart.deleteOne({ user: req.user._id }).exec((error, result) => {
+    if (error) return res.status(400).json({ error });
+    if (result) {
+      req.body.user = req.user._id;
+      req.body.orderStatus = [
+        {
+          type: "ordered",
+          date: new Date(),
+          isCompleted: true,
+        },
+        {
+          type: "packed",
+          isCompleted: false,
+        },
+        {
+          type: "shipped",
+          isCompleted: false,
+        },
+        {
+          type: "delivered",
+          isCompleted: false,
+        },
+      ];
 
-        const order = new Order(req.body);
+      const order = new Order(req.body);
 
-        order.save((error, order) => {
-          if (error) return res.status(400).json({ error });
-          if (order) {
-            res.status(201).json({ order });
-          }
-        });
-      }
-    });
+      order.save((error, order) => {
+        if (error) return res.status(400).json({ error });
+        if (order) {
+          res.status(201).json({ order });
+        }
+      });
+    }
+  });
 };
 
 exports.getOrders = (req, res) => {
   Order.find({ user: req.user._id })
     .select("_id paymentStatus paymentType orderStatus items")
     .populate("items.productId", "_id name productPictures")
+    .sort({ _id: -1 })
     .exec((error, orders) => {
       if (error) return res.status(400).json({ error });
       if (orders) {
-        res.status(200).json({ orders });
+        Address.findOne({
+          user: req.user._id,
+        }).exec((error, address) => {
+          if (error) return res.status(400).json({ error });
+          orders.address = address.address.find(
+            (adr) => adr._id.toString() == orders.addressId.toString()
+          );
+          res.status(200).json({
+            orders,
+          });
+        });
       }
     });
 };
+exports.getAllOrders = async (req, res) => {
+  try {
+    // Use the `populate` method to retrieve user details for each order
+    const allOrders = await Order.find().populate({
+      path: 'user',
+      select: 'firstName lastName email', // Specify the user fields you want to retrieve
+    });
+
+    res.status(200).json({
+      allOrders,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
 
 exports.getOrderById = (req, res) => {
   Order.findOne({ _id: req.body.orderId })
