@@ -42,11 +42,11 @@ exports.addItemToCart = async (req, res) => {
 
       const responses = await Promise.all(promiseArray);
       res
-        .status(201)
-        .json({
-          responses,
-          message: "Item successfully added to your cart! 🛒",
-        });
+      .status(201)
+      .json({
+        responses,
+        message: "Item successfully added to your cart! 🛒",
+      });
     } else {
       const newCart = new Cart({
         user: req.user._id,
@@ -55,19 +55,19 @@ exports.addItemToCart = async (req, res) => {
 
       const savedCart = await newCart.save();
       res
-        .status(201)
-        .json({
-          cart: savedCart,
-          message: "Item successfully added to your cart! 🛒",
-        });
+      .status(201)
+      .json({
+        cart: savedCart,
+        message: "Item successfully added to your cart! 🛒",
+      });
     }
   } catch (error) {
     res
-      .status(400)
-      .json({
-        error,
-        message: "Oops! Something went wrong. Please try again later.",
-      });
+    .status(400)
+    .json({
+      error,
+      message: "Oops! Something went wrong. Please try again later.",
+    });
   }
 };
 
@@ -103,11 +103,11 @@ exports.getCartItems = (req, res) => {
       });
   } catch (error) {
     res
-      .status(400)
-      .json({
-        error,
-        message: "Oops! Something went wrong. Please try again later.",
-      });
+    .status(400)
+    .json({
+      error,
+      message: "Oops! Something went wrong. Please try again later.",
+    });
   }
 };
 
@@ -128,18 +128,18 @@ exports.removeCartItems = async (req, res) => {
       ).exec();
 
       res
-        .status(202)
-        .json({
-          result,
-          message: "Item successfully removed from your cart! 🛒",
-        });
+      .status(202)
+      .json({
+        result,
+        message: "Item successfully removed from your cart! 🛒",
+      });
     }
   } catch (error) {
     res
-      .status(400)
-      .json({
-        error,
-        message: "Oops! Something went wrong. Please try again later.",
-      });
+    .status(400)
+    .json({
+      error,
+      message: "Oops! Something went wrong. Please try again later.",
+    });
   }
 };
