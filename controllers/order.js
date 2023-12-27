@@ -86,24 +86,71 @@ exports.getOrders = async (req, res) => {
   }
 };
 
-
 exports.getAllOrders = async (req, res) => {
   try {
     // Use the `populate` method to retrieve user details for each order
-    const allOrders = await Order.find().populate({
-      path: 'user',
-      select: 'firstName lastName email', // Specify the user fields you want to retrieve
-    });
+    const allOrders = await Order.find()
+      .populate({
+        path: "user",
+        select: "firstName lastName email", // Specify the user fields you want to retrieve
+      })
+      .populate("items.productId", "_id name productPictures")
+      .exec();
+
+    // Organize the response by grouping orders under each user with full name
+    const ordersByUser = {};
+
+    for (const order of allOrders) {
+      const { user, addressId, ...orderDetails } = order._doc; // Extract user details and order details
+      const userId = user._id.toString();
+
+      // Create an entry for the user if it doesn't exist
+      if (!ordersByUser[userId]) {
+        ordersByUser[userId] = {
+          user: {
+            fullName: `${user.firstName} ${user.lastName}`,
+            email: user.email,
+          },
+          orders: [],
+        };
+      }
+
+      try {
+        const address = await Address.findOne({
+          user: userId,
+        });
+
+        if (!address || !address.address) {
+          return res.status(404).json({ error: "Address not found" });
+        }
+
+        // Attach address to each order
+        const matchingAddress = address.address.find(
+          (adr) => adr._id.toString() === addressId.toString()
+        );
+
+        // Add the order details and address to the user's orders
+        ordersByUser[userId].orders.push({
+          ...orderDetails,
+          address: matchingAddress || null,
+        });
+      } catch (addressError) {
+        console.error(addressError);
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+
+    // Convert the object to an array for the final response
+    const finalResponse = Object.values(ordersByUser);
 
     res.status(200).json({
-      allOrders,
+      allOrders: finalResponse,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Internal Server Error' });
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
 
 exports.getOrderById = (req, res) => {
   Order.findOne({ _id: req.body.orderId })
