@@ -1,11 +1,16 @@
-const { requireSignin, userMiddleware } = require("../common-middleware");
-const { addOrder, getOrders, getOrderById,getAllOrders } = require("../controllers/order");
+const { requireSignin, userMiddleware, adminMiddleware } = require("../common-middleware");
+const {
+  addOrder,
+  getOrders,
+  getOrderById,
+  getAllOrders,
+} = require("../controllers/order");
 const router = require("express").Router();
 
-router.post("/order/addOrder", requireSignin, userMiddleware, addOrder);
-router.get("/order/getOrders", requireSignin, userMiddleware, getOrders);
-router.get("/order/getAllOrders", requireSignin, userMiddleware, getAllOrders);
-router.post("/order/getOrderById", requireSignin, userMiddleware, getOrderById);
+router.post("/order/addOrder", requireSignin, addOrder);
+router.get("/order/getOrders", requireSignin, getOrders);
+router.get("/order/getAllOrders", requireSignin, getAllOrders);
+router.post("/order/getOrderById", requireSignin, getOrderById);
 
 module.exports = router;
 
