@@ -38,6 +38,7 @@
     "nodemailer": "^6.9.1",
     "nodemon": "^2.0.20",
     "otp-generator": "^4.0.1",
+    "passport": "^0.7.0",
     "path": "^0.12.7",
     "paytmchecksum": "^1.5.1",
     "razorpay": "^2.9.2",
