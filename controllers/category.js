@@ -146,19 +146,6 @@ exports.getCategories = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 
-
-
-
-  //   if (categoryList) {
-  //     res.status(200).json({
-  //       categoryList,
-  //     });
-  //   } else {
-  //     return res.status(400).json({ message: error.message });
-  //   }
-  // } catch (err) {
-  //   res.status(500).json({ message: err.message });
-  // }
 };
 
 exports.updateCategories = async (req, res) => {
@@ -308,21 +295,6 @@ exports.deleteCategories = async (req, res) => {
       res.status(400).json({ message: "Something went wrong" });
     }
 
-    // for (let i = 0; i < ids.length; i++) {
-    //   const deleteCategory = await Category.findOneAndDelete({
-    //     _id: ids[i]._id,
-    //     createdBy: req.user._id,
-    //   });
-    //   deletedCategories.push(deleteCategory);
-    // }
-
-    // if (deletedCategories.length == ids.length) {
-    //   res
-    //     .status(201)
-    //     .json({ message: "A category has been successfully deleted." });
-    // } else {
-    //   res.status(400).json({ message: "Something went wrong" });
-    // }
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

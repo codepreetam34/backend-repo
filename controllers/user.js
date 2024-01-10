@@ -18,6 +18,33 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+exports.deleteUser = async (req, res) => {
+  try {
+    const _id = req.body.id;
+    const response = await User.findOne({ _id });
+    if (response?.profilePicture) {
+      const key = response?.profilePicture.split("/").pop();
+      const deleteParams = {
+        Bucket: "vibezter-spaces",
+        Key: key,
+      };
+
+      await s3.deleteObject(deleteParams).promise();
+    }
+    const deletedUser = await User.findOneAndDelete({ _id });
+
+    if (deletedUser) {
+      res.status(200).json({
+        message: `User ${response.email} has been successfully deleted.`,
+      });
+    } else {
+      res.status(400).json({ message: "Something went wrong" });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 exports.updateUser = async (req, res) => {
   const { firstName, lastName, gender, contactNumber, dob, email, role, _id } =
     req.body;
@@ -77,4 +104,3 @@ exports.updateUser = async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 };
-

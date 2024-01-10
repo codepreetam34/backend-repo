@@ -1,5 +1,5 @@
 const express = require("express");
-const { getAllUsers, updateUser } = require("../controllers/user");
+const { getAllUsers, updateUser, deleteUser } = require("../controllers/user");
 
 const {
   requireSignin,
@@ -17,6 +17,12 @@ router.patch(
   adminMiddleware,
   upload.single("profilePicture"),
   updateUser
+);
+router.post(
+  "/user/delete",
+  requireSignin,
+  adminMiddleware,
+  deleteUser
 );
 
 module.exports = router;
