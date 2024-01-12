@@ -18,6 +18,7 @@ router.patch(
   upload.single("profilePicture"),
   updateUser
 );
+
 router.post(
   "/user/delete",
   requireSignin,

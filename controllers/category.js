@@ -4,7 +4,6 @@ const Product = require("../models/product");
 const shortid = require("shortid");
 const { S3 } = require("aws-sdk");
 
-// Initialize AWS S3
 const s3 = new S3({
   endpoint: "https://vibezter-spaces.blr1.digitaloceanspaces.com",
   accessKeyId: "DO00XDVVVLMUEJCKADRM",

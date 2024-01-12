@@ -67,11 +67,10 @@ app.use("/api", homepageShopByOccasion)
 app.use("/api", homepagePamperZone)
 app.use("/api", users)
 
-
-
 app.get("/", (req, res) => {
   res.send(welcomeMessage);
 });
+
 app.get("/api", (req, res) => {
   res.send(welcomeMessage);
 });
@@ -82,3 +81,49 @@ app.use(errorHandler);
 app.listen(port, () => {
   console.log("Backend server is running at port", port);
 });
+
+
+
+
+
+// const passport = require('passport');
+// const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
+
+// // Passport configuration
+// passport.use(
+//   new GoogleStrategy(
+//     {
+//       clientID: 'YOUR_GOOGLE_CLIENT_ID',
+//       clientSecret: 'YOUR_GOOGLE_CLIENT_SECRET',
+//       callbackURL: 'http://localhost:3000/auth/google/callback',
+//     },
+//     (accessToken, refreshToken, profile, done) => {
+//       // You can handle user data here
+//       return done(null, profile);
+//     }
+//   )
+// );
+
+// passport.serializeUser((user, done) => {
+//   done(null, user);
+// });
+
+// passport.deserializeUser((obj, done) => {
+//   done(null, obj);
+// });
+
+// // Express middleware
+// app.use(require('express-session')({ secret: 'your-secret-key', resave: true, saveUninitialized: true }));
+// app.use(passport.initialize());
+// app.use(passport.session());
+
+// // Routes
+// app.get('/auth/google', passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/plus.login'] }));
+
+// app.get('/auth/google/callback',
+//   passport.authenticate('google', { failureRedirect: '/' }),
+//   (req, res) => {
+//     res.redirect('/');
+//   }
+// );

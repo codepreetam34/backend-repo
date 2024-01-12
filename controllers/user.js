@@ -1,14 +1,14 @@
 const User = require("../models/user");
-const bcrypt = require("bcrypt");
 const shortid = require("shortid");
 const { S3 } = require("aws-sdk");
-// Initialize AWS S3
+
 const s3 = new S3({
   endpoint: "https://vibezter-spaces.blr1.digitaloceanspaces.com",
   accessKeyId: "DO00XDVVVLMUEJCKADRM",
   secretAccessKey: "SIFlABu43WE1DvoOHi87bmZmykG0ECL+6t5+O+qBacU",
   s3ForcePathStyle: true,
 });
+
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.find({}).sort({ _id: -1 });
@@ -58,9 +58,11 @@ exports.updateUser = async (req, res) => {
     if (lastName) {
       newUser.lastName = lastName;
     }
+
     if (email) {
       newUser.email = email;
     }
+
     if (role) {
       newUser.role = role;
     }
