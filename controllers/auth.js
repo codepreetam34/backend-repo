@@ -5,7 +5,6 @@ const bcrypt = require("bcrypt");
 const shortid = require("shortid");
 const sendEmail = require("../utils/email/sendEmail");
 const otpGenerator = require("otp-generator");
-
 const crypto = require("crypto");
 
 const generateJwtToken = (_id, role) => {
@@ -45,22 +44,17 @@ exports.requestVerifyEmail = async (req, res) => {
   });
 };
 
-
-
 exports.verifyEmailViaOtp = async (req, res) => {
   const { otp, id } = req.body;
   console.log("OTP from request:", otp);
   console.log("OTP from locals:", req.app.locals.OTP);
-  // 
+  //
   // if (parseInt(req.app.locals.OTP) === parseInt(otp)) {
   if (req.app.locals.OTP === undefined) {
     return res.status(400).send({ error: "OTP not set" });
   }
 
-
   if (parseInt(req.app.locals.OTP) === parseInt(otp)) {
-
-
     req.app.locals.OTP = null; // reset the otp
 
     await User.updateOne(
@@ -86,8 +80,7 @@ exports.verifyEmailViaOtp = async (req, res) => {
       message: "Email verified successfully",
       user: user,
     });
-  }
-  else {
+  } else {
     return res.status(400).send({ error: "Invalid OTP format" });
   }
 };
@@ -103,9 +96,11 @@ exports.createResetSession = async (req, res) => {
 exports.signup = (req, res) => {
   User.findOne({ email: req.body.email }).exec(async (error, user) => {
     if (user)
-      return res.status(400).json({
-        error: "User already registered",
-      });
+      if (user.role === "user") {
+        return res.status(400).json({
+          error: "User with role 'user' already registered",
+        });
+      }
 
     const { firstName, lastName, email, password, contactNumber } = req.body;
 
@@ -116,7 +111,7 @@ exports.signup = (req, res) => {
       contactNumber,
       email,
       hash_password,
-      username: shortid.generate(),
+      username: `${firstName}_${shortid.generate()}`,
     });
 
     _user.save((error, user) => {
@@ -134,7 +129,8 @@ exports.signup = (req, res) => {
         });
         if (!user) {
           return res.status(400).json({
-            message: "User not found. Please check your credentials or sign up.",
+            message:
+              "User not found. Please check your credentials or sign up.",
           });
         }
         const link = `${process.env.CLIENT_URL}/verifyemail?otp=${req.app.locals.OTP}&id=${user._id}`;
@@ -178,55 +174,52 @@ exports.signup = (req, res) => {
   });
 };
 
-exports.signin = (req, res) => {
-  User.findOne({ email: req.body.email }).exec(async (error, user) => {
-    if (error) return res.status(400).json({ error });
-    if (user) {
-      const isPassword = await user.authenticate(req.body.password);
-      if (isPassword && user.role === "user") {
-        // const token = jwt.sign(
-        //   { _id: user._id, role: user.role },
-        //   process.env.JWT_SECRET,
-        //   { expiresIn: "1d" }
-        // );
-        const token = generateJwtToken(user._id, user.role);
-        const {
-          _id,
-          firstName,
-          lastName,
-          email,
-          role,
-          fullName,
-          gender,
-          dob,
-          contactNumber,
-          profilePicture,
-        } = user;
-        res.cookie("token", token, { expiresIn: "7d" });
-        res.status(200).json({
-          token,
-          user: {
-            _id,
-            firstName,
-            lastName,
-            email,
-            role,
-            fullName,
-            gender,
-            dob,
-            contactNumber,
-            profilePicture,
-          },
-        });
-      } else {
-        return res.status(400).json({
-          message: "Your username/password is invalid. Please try again.",
-        });
-      }
-    } else {
-      return res.status(400).json({ message: "Something went wrong" });
+exports.signin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email, role: "user" });
+
+    if (!user || !(await user.authenticate(password)) || user.role !== "user") {
+      return res.status(400).json({
+        message: "Invalid credentials. Please check your email and password.",
+      });
     }
-  });
+
+    const token = generateJwtToken(user._id, user.role);
+
+    const {
+      _id,
+      firstName,
+      lastName,
+      role,
+      fullName,
+      gender,
+      dob,
+      contactNumber,
+      profilePicture,
+    } = user;
+
+    res.cookie("token", token, { expiresIn: "7d" });
+
+    return res.status(200).json({
+      token,
+      user: {
+        _id,
+        firstName,
+        lastName,
+        email,
+        role,
+        fullName,
+        gender,
+        dob,
+        contactNumber,
+        profilePicture,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
 };
 
 exports.updateProfile = async (req, res) => {
