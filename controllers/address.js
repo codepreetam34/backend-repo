@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 
 exports.addAddress = (req, res) => {
   try {
-
     const { payload } = req.body;
 
     if (payload.address) {
@@ -49,12 +48,11 @@ exports.getAddress = (req, res) => {
   try {
     UserAddress.findOne({ user: req.user._id }).exec((error, userAddress) => {
       if (error) return res.status(400).json({ error });
-
       if (userAddress) {
         userAddress.address.reverse();
         res.status(200).json({ userAddress });
       } else {
-        res.status(404).json({ error: "No address found" });
+        res.status(404).json({ message: "No address found" });
       }
     });
   } catch (err) {
@@ -110,6 +108,36 @@ exports.deleteAddress = (req, res) => {
       }
     });
   } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Internal Server Error !! Please try again" });
+  }
+};
+
+exports.setDefaultAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+
+    const userAddress = await UserAddress.findOne({ user: req.user._id });
+
+    if (!userAddress) {
+      return res.status(404).json({ message: "User's address not found" });
+    }
+
+    // Set the selected address as default
+    userAddress.address.forEach((address) => {
+      address.isDefault = address._id.toString() === addressId;
+    });
+
+    // Save the updated user address
+    const updatedUserAddress = await userAddress.save();
+
+    res.status(200).json({
+      message: "Default address set successfully",
+      userAddress: updatedUserAddress,
+    });
+  } catch (error) {
+    console.error(error);
     res
       .status(500)
       .json({ error: "Internal Server Error !! Please try again" });

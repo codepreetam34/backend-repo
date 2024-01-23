@@ -429,7 +429,7 @@ exports.updatePassword = async (req, res) => {
 
 exports.getUserData = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
+    const user = await User.findById({ _id: req.user._id });
     return res.status(200).json({ user: user });
   } catch (err) {
     res.status(500).json({ message: err.message });

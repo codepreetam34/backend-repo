@@ -19,7 +19,8 @@ const addressSchema = new mongoose.Schema({
     trim: true,
   },
   address: {
-    type: String, trim: true,
+    type: String,
+    trim: true,
   },
   cityDistrictTown: {
     type: String,
@@ -28,13 +29,19 @@ const addressSchema = new mongoose.Schema({
     type: String,
   },
   landmark: {
-    type: String, trim: true,
+    type: String,
+    trim: true,
   },
   alternatePhone: {
     type: String,
   },
   addressType: {
-    type: String, trim: true,
+    type: String,
+    trim: true,
+  },
+  isDefault: {
+    type: Boolean,
+    default: false,
   },
 });
 

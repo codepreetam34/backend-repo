@@ -14,7 +14,6 @@ router.get("/user/getAll", requireSignin, adminMiddleware, getAllUsers);
 router.patch(
   "/user/update",
   requireSignin,
-  adminMiddleware,
   upload.single("profilePicture"),
   updateUser
 );

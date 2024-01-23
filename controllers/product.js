@@ -230,7 +230,7 @@ exports.getProductDetailsById = async (req, res) => {
   }
 };
 
-exports.deleteProductById = async (req, res) => {
+exports.deleteProductById = async (req, res) => {n
   try {
     const { productId } = req.params;
     if (productId) {
