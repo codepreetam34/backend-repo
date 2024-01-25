@@ -31,7 +31,8 @@ exports.signup = (req, res) => {
       _user.save((error, data) => {
         if (error) {
           return res.status(400).json({
-            message: "Something went wrong", error,
+            message: "Something went wrong",
+            error,
           });
         }
 
@@ -65,12 +66,28 @@ exports.signin = (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: "15d" }
           );
-          const { _id, firstName, lastName, email, role, fullName } = user;
+          const {
+            _id,
+            firstName,
+            lastName,
+            email,
+            role,
+            fullName,
+            profilePicture,
+          } = user;
           res.cookie("token", token, { expiresIn: "15d" });
 
           res.status(200).json({
             token,
-            user: { _id, firstName, lastName, email, role, fullName },
+            user: {
+              _id,
+              firstName,
+              lastName,
+              email,
+              role,
+              fullName,
+              profilePicture,
+            },
           });
         } else {
           return res.status(400).json({
@@ -78,12 +95,9 @@ exports.signin = (req, res) => {
           });
         }
       } else {
-        return res
-          .status(400)
-          .json({
-            message:
-              "User not found. Please check your credentials or sign up.",
-          });
+        return res.status(400).json({
+          message: "User not found. Please check your credentials or sign up.",
+        });
       }
     });
   } catch (err) {
