@@ -1,5 +1,5 @@
 const Product = require("../models/product");
-const Order = require('../models/order');
+const Order = require("../models/order");
 const Category = require("../models/category");
 let sortBy = require("lodash.sortby");
 const { S3 } = require("aws-sdk");
@@ -230,7 +230,7 @@ exports.getProductDetailsById = async (req, res) => {
   }
 };
 
-exports.deleteProductById = async (req, res) => {n
+exports.deleteProductById = async (req, res) => {
   try {
     const { productId } = req.params;
     if (productId) {
@@ -364,10 +364,15 @@ exports.createProductReview = async (req, res) => {
     const { rating, comment, name } = req.body;
 
     if (!name || !rating || !comment) {
-      return res.status(400).json({ message: "name, rating, and comment are required" });
+      return res
+        .status(400)
+        .json({ message: "name, rating, and comment are required" });
     }
 
-    let image = '';
+    const { _id: profilePicture } = req.user;
+    const userData = await User.find({ _id: req.user._id }).sort({ _id: -1 });
+
+    let image = "";
     if (req.file) {
       const fileContent = req.file.buffer;
       const filename = shortid.generate() + "-" + req.file.originalname;
@@ -387,7 +392,9 @@ exports.createProductReview = async (req, res) => {
       return res.status(404).json({ message: "Product not found." });
     }
 
-    const existingReviewIndex = product.reviews.findIndex((r) => r.user.toString() === req.user._id.toString());
+    const existingReviewIndex = product.reviews.findIndex(
+      (r) => r.user.toString() === req.user._id.toString()
+    );
 
     if (existingReviewIndex !== -1) {
       // Update the existing review
@@ -396,6 +403,7 @@ exports.createProductReview = async (req, res) => {
         rating: Number(rating),
         comment,
         image,
+        profilePicture: userData.profilePicture,
         user: req.user._id,
       };
     } else {
@@ -405,13 +413,17 @@ exports.createProductReview = async (req, res) => {
         rating: Number(rating),
         comment,
         image,
+        profilePicture: userData.profilePicture,
         user: req.user._id,
       };
 
       product.reviews.push(newReview);
     }
 
-    const totalRating = product.reviews.reduce((acc, item) => acc + item.rating, 0);
+    const totalRating = product.reviews.reduce(
+      (acc, item) => acc + item.rating,
+      0
+    );
     product.numReviews = product.reviews.length;
     product.rating = totalRating / product.numReviews;
 
@@ -426,27 +438,35 @@ exports.createProductReview = async (req, res) => {
 
 exports.getProductReview = async (req, res) => {
   try {
-
     const productId = req.body.productId;
     const userId = req.user._id;
 
     // Find the product with the specified ID and user's review
     const productWithUserReview = await Product.findOne({
       _id: productId,
-      'reviews.user': userId,
+      "reviews.user": userId,
     });
 
     if (!productWithUserReview) {
-      return res.status(200).json({ message: 'Product or review not found for the user', purchased: false });
+      return res.status(200).json({
+        message: "Product or review not found for the user",
+        purchased: false,
+      });
     }
 
     // Extract the user's review for the product
-    const userReview = productWithUserReview.reviews.find((review) => review.user.equals(userId));
+    const userReview = productWithUserReview.reviews.find((review) =>
+      review.user.equals(userId)
+    );
 
-    return res.status(200).json({ userReview, message: "Product already reviewed !", purchased: true });
+    return res.status(200).json({
+      userReview,
+      message: "Product already reviewed !",
+      purchased: true,
+    });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 exports.checkProductPurchase = async (req, res) => {
@@ -454,26 +474,30 @@ exports.checkProductPurchase = async (req, res) => {
     const product = await Product.findById(req.params.productId);
 
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: "Product not found" });
     }
 
     // Check if the user has purchased the product
     const userOrder = await Order.findOne({
       user: req.user._id,
-      'items.productId': req.params.productId,
-      paymentStatus: 'completed',
+      "items.productId": req.params.productId,
+      paymentStatus: "completed",
     });
 
     if (userOrder) {
-      return res.status(200).json({ purchased: true, message: 'You have purchased the product.' });
+      return res
+        .status(200)
+        .json({ purchased: true, message: "You have purchased the product." });
     } else {
-      return res.status(200).json({ purchased: false, message: 'You have not purchased the product.' });
+      return res.status(200).json({
+        purchased: false,
+        message: "You have not purchased the product.",
+      });
     }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
-
 };
 
 exports.updateProducts = async (req, res) => {
@@ -495,7 +519,6 @@ exports.updateProducts = async (req, res) => {
     let productPictures = [];
 
     if (req.files && req.files.length > 0) {
-
       productPictures = await Promise.all(
         req.files.map(async (file, index) => {
           const fileContent = file.buffer;
@@ -529,7 +552,6 @@ exports.updateProducts = async (req, res) => {
       updateObject.slug = slugify(name);
     }
 
-
     if (actualPrice !== undefined) {
       updateObject.actualPrice = actualPrice;
     }
@@ -553,7 +575,6 @@ exports.updateProducts = async (req, res) => {
     }
 
     if (category !== undefined) {
-
       updateObject.category = category;
     }
 
@@ -594,7 +615,8 @@ exports.updateProducts = async (req, res) => {
       updateObject,
       {
         new: true,
-      });
+      }
+    );
     if (updatedProduct) {
       return res.status(200).json({
         updatedProduct,
@@ -624,7 +646,9 @@ exports.getProductsBySorting = async (req, res) => {
       return res.status(400).json({ error: "Failed to fetch products" });
     }
     if (pincodeData) {
-      filteredProd = filteredProd.filter((product) => product.pincode.includes(pincodeData));
+      filteredProd = filteredProd.filter((product) =>
+        product.pincode.includes(pincodeData)
+      );
     }
 
     // Step 3: Filter products by tagName
@@ -635,14 +659,22 @@ exports.getProductsBySorting = async (req, res) => {
       });
       if (filteredProducts) {
         let sortedProducts;
-        if (sort == 'Price: Low to High') {
-          sortedProducts = filteredProducts.slice().sort((a, b) => a.discountPrice - b.discountPrice);
-        } else if (sort == 'Price: High to Low') {
-          sortedProducts = filteredProducts.slice().sort((a, b) => b.discountPrice - a.discountPrice);
-        } else if (sort == 'New to Old') {
-          sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        } else if (sort == 'Old to New') {
-          sortedProducts = filteredProducts.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+        if (sort == "Price: Low to High") {
+          sortedProducts = filteredProducts
+            .slice()
+            .sort((a, b) => a.discountPrice - b.discountPrice);
+        } else if (sort == "Price: High to Low") {
+          sortedProducts = filteredProducts
+            .slice()
+            .sort((a, b) => b.discountPrice - a.discountPrice);
+        } else if (sort == "New to Old") {
+          sortedProducts = filteredProducts
+            .slice()
+            .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        } else if (sort == "Old to New") {
+          sortedProducts = filteredProducts
+            .slice()
+            .sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
         } else {
           // Default sorting is by the latest products (original sorting).
           sortedProducts = filteredProducts;
@@ -657,25 +689,29 @@ exports.getProductsBySorting = async (req, res) => {
       } else {
         return res.status(400).json({ error: "Failed to fetch products" });
       }
-    }
-    else {
-
-
+    } else {
       if (tagName) {
         const filteredProducts = filteredProd.filter((product) => {
           return product.tags.some((tag) => tag.names.includes(tagName));
         });
 
-
         let sortedProducts;
-        if (sort == 'Price: Low to High') {
-          sortedProducts = filteredProducts.slice().sort((a, b) => a.discountPrice - b.discountPrice);
-        } else if (sort == 'Price: High to Low') {
-          sortedProducts = filteredProducts.slice().sort((a, b) => b.discountPrice - a.discountPrice);
-        } else if (sort == 'New to Old') {
-          sortedProducts = filteredProducts.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        } else if (sort == 'Old to New') {
-          sortedProducts = filteredProducts.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+        if (sort == "Price: Low to High") {
+          sortedProducts = filteredProducts
+            .slice()
+            .sort((a, b) => a.discountPrice - b.discountPrice);
+        } else if (sort == "Price: High to Low") {
+          sortedProducts = filteredProducts
+            .slice()
+            .sort((a, b) => b.discountPrice - a.discountPrice);
+        } else if (sort == "New to Old") {
+          sortedProducts = filteredProducts
+            .slice()
+            .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        } else if (sort == "Old to New") {
+          sortedProducts = filteredProducts
+            .slice()
+            .sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
         } else {
           // Default sorting is by the latest products (original sorting).
           sortedProducts = filteredProducts;
@@ -689,18 +725,23 @@ exports.getProductsBySorting = async (req, res) => {
           sortedProducts: sortedProducts,
         });
       } else {
-
         let sortedProducts;
-        if (sort == 'Price: Low to High') {
-          sortedProducts = filteredProd.slice().sort((a, b) => a.discountPrice - b.discountPrice);
-        }
-        else if (sort == 'Price: High to Low') {
-          sortedProducts = filteredProd.slice().sort((a, b) => b.discountPrice - a.discountPrice);
-        }
-        else if (sort == 'New to Old') {
-          sortedProducts = filteredProd.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        } else if (sort == 'Old to New') {
-          sortedProducts = filteredProd.slice().sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+        if (sort == "Price: Low to High") {
+          sortedProducts = filteredProd
+            .slice()
+            .sort((a, b) => a.discountPrice - b.discountPrice);
+        } else if (sort == "Price: High to Low") {
+          sortedProducts = filteredProd
+            .slice()
+            .sort((a, b) => b.discountPrice - a.discountPrice);
+        } else if (sort == "New to Old") {
+          sortedProducts = filteredProd
+            .slice()
+            .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        } else if (sort == "Old to New") {
+          sortedProducts = filteredProd
+            .slice()
+            .sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
         } else {
           // Default sorting is by the latest products (original sorting).
           sortedProducts = filteredProd;
@@ -714,7 +755,6 @@ exports.getProductsBySorting = async (req, res) => {
           sortedProducts: sortedProducts,
         });
       }
-
     }
   } catch (err) {
     return res.status(400).json({ error: "Failed to fetch products" });
@@ -729,7 +769,10 @@ exports.getProductsByCategoryId = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
 
     const [products, count] = await Promise.all([
-      Product.find({ category: id }).sort({ _id: -1 }).limit(limit).skip(limit * page - limit),
+      Product.find({ category: id })
+        .sort({ _id: -1 })
+        .limit(limit)
+        .skip(limit * page - limit),
       Product.countDocuments({ category: id }),
     ]);
 
@@ -743,14 +786,20 @@ exports.getProductsByCategoryId = async (req, res) => {
     let responseProducts = products;
 
     if (pincodeData) {
-      responseProducts = responseProducts.filter((product) => product.pincode.includes(pincodeData));
+      responseProducts = responseProducts.filter((product) =>
+        product.pincode.includes(pincodeData)
+      );
     }
 
     res.status(200).json({
       products: responseProducts,
       categoryId: id,
       pageTitle: individualCat?.name,
-      pagination: { currentPage: page, totalPages, totalItems: responseProducts.length },
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: responseProducts.length,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -777,7 +826,9 @@ exports.getProductsByTag = async (req, res) => {
     let filteredProducts = allProducts;
 
     if (pincodeData) {
-      filteredProducts = filteredProducts.filter((product) => product.pincode.includes(pincodeData));
+      filteredProducts = filteredProducts.filter((product) =>
+        product.pincode.includes(pincodeData)
+      );
     }
 
     filteredProducts = filteredProducts.filter((product) =>
@@ -786,19 +837,17 @@ exports.getProductsByTag = async (req, res) => {
 
     if (filteredProducts) {
       const sortOptions = {
-        'Price: Low to High': 'discountPrice',
-        'Price: High to Low': 'discountPrice',
-        'New to Old': 'updatedAt',
-        'Old to New': 'updatedAt',
+        "Price: Low to High": "discountPrice",
+        "Price: High to Low": "discountPrice",
+        "New to Old": "updatedAt",
+        "Old to New": "updatedAt",
       };
 
       const sortedProducts = sort
         ? filteredProducts.slice().sort((a, b) => {
-          const key = sortOptions[sort] || sortOptions['New to Old'];
-          return sort === 'High to Low'
-            ? b[key] - a[key]
-            : a[key] - b[key];
-        })
+            const key = sortOptions[sort] || sortOptions["New to Old"];
+            return sort === "High to Low" ? b[key] - a[key] : a[key] - b[key];
+          })
         : filteredProducts;
 
       res.status(200).json({
@@ -816,7 +865,6 @@ exports.getProductsByTag = async (req, res) => {
   }
 };
 
-
 exports.getProductsByTopCategory = async (req, res) => {
   try {
     const product = await Product.find({}).sort({ _id: -1 });
@@ -827,7 +875,7 @@ exports.getProductsByTopCategory = async (req, res) => {
     if (products) {
       res.status(200).json({ products: filteredProducts });
     } else {
-      return res.status(400).json({ error: 'No products found' });
+      return res.status(400).json({ error: "No products found" });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -850,7 +898,7 @@ exports.getProductsByBestSeller = async (req, res) => {
     if (bestSellerProducts.length > 0) {
       res.status(200).json({ products: bestSellerProducts });
     } else {
-      return res.status(404).json({ error: 'No best-selling products found' });
+      return res.status(404).json({ error: "No best-selling products found" });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
