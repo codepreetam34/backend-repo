@@ -6,6 +6,11 @@ const homepageTwoAdsBannerSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    subTitle: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     slug: {
       type: String,
       required: true,

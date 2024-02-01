@@ -1,19 +1,15 @@
 const Banner = require("../models/homepageTwoAdsBanner");
 const shortid = require("shortid");
 const slugify = require("slugify");
-const {
-  s3
-} = require("../common-middleware/index");
+const { s3 } = require("../common-middleware/index");
 
 exports.createBanner = async (req, res) => {
   try {
-
-    const { title, imageAltText } = req.body;
+    const { title, subTitle, imageAltText } = req.body;
 
     let banner = "";
 
     if (req.file) {
-
       const fileContent = req.file.buffer;
       const filename = shortid.generate() + "-" + req.file.originalname;
       const uploadParams = {
@@ -36,6 +32,7 @@ exports.createBanner = async (req, res) => {
 
     const bannerData = new Banner({
       title: title,
+      subTitle: subTitle,
       slug: slug,
       banner,
       imageAltText,
@@ -45,7 +42,11 @@ exports.createBanner = async (req, res) => {
     bannerData.save((error, bannerImage) => {
       if (error) return res.status(400).json({ message: error.message });
       if (bannerImage) {
-        res.status(201).json({ banners: bannerImage, files: req.files, message: "Banner has been added successfully" });
+        res.status(201).json({
+          banners: bannerImage,
+          files: req.files,
+          message: "Banner has been added successfully",
+        });
       }
     });
   } catch (err) {
@@ -106,7 +107,10 @@ exports.deleteBannerById = async (req, res) => {
         Banner.deleteOne({ _id: bannerId }).exec((error, result) => {
           if (error) return res.status(400).json({ error });
           if (result) {
-            res.status(202).json({ result, message: "Banner has been deleted successfully" });
+            res.status(202).json({
+              result,
+              message: "Banner has been deleted successfully",
+            });
           }
         });
       }
@@ -146,7 +150,7 @@ exports.getBanners = async (req, res) => {
 
 exports.updateBanner = async (req, res) => {
   try {
-    const { _id, title, imageAltText } = req.body;
+    const { _id, title, subTitle, imageAltText } = req.body;
 
     const bannerData = {
       createdBy: req.user._id,
@@ -156,26 +160,25 @@ exports.updateBanner = async (req, res) => {
       const fileContent = req.file.buffer;
       const filename = shortid.generate() + "-" + req.file.originalname;
       const uploadParams = {
-        Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
+        Bucket: "vibezter-spaces",
         Key: filename,
         Body: fileContent,
         ACL: "public-read",
       };
 
-      // Upload the file to DigitalOcean Spaces
       const uploadedFile = await s3.upload(uploadParams).promise();
 
-      // Set the image URL in the bannerImage variable
       bannerData.banner = uploadedFile.Location;
     }
 
     if (title != undefined) {
-      // Use shortid to generate a unique identifier
       const uniqueId = shortid.generate();
-      // Combine shortid with slugify for the 'slug' field
       const slug = `${slugify(title)}-${uniqueId}`;
       bannerData.title = title;
       bannerData.slug = slug;
+    }
+    if (subTitle != undefined) {
+      bannerData.subTitle = subTitle;
     }
 
     if (imageAltText != undefined) {
@@ -184,7 +187,9 @@ exports.updateBanner = async (req, res) => {
     const updatedBanner = await Banner.findOneAndUpdate({ _id }, bannerData, {
       new: true,
     });
-    return res.status(201).json({ updatedBanner });
+    return res
+      .status(201)
+      .json({ updatedBanner, message: "Banner has been updated successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
