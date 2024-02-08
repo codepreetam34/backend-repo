@@ -904,3 +904,41 @@ exports.getProductsByBestSeller = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.getProductsByTagOnly = async (req, res) => {
+  try {
+    const { tagName, pincodeData } = req.body;
+    const allProducts = await Product.find();
+    if (allProducts.length <= 0) {
+      return res.status(200).json({
+        products: [],
+        pageTitle: tagName,
+        tagName: tagName,
+      });
+    }
+
+    let filteredProducts = allProducts;
+
+    if (pincodeData) {
+      filteredProducts = filteredProducts.filter((product) =>
+        product.pincode.includes(pincodeData)
+      );
+    }
+
+    filteredProducts = filteredProducts.filter((product) =>
+      product.tags.some((tag) => tag.names.includes(tagName))
+    );
+
+    if (filteredProducts) {
+      res.status(200).json({
+        pageTitle: tagName,
+        tagName: tagName,
+        products: filteredProducts,
+      });
+    } else {
+      return res.status(400).json({ message: "Failed to fetch products" });
+    }
+  } catch (err) {
+    return res.status(400).json({ error: "Failed to fetch products" });
+  }
+};

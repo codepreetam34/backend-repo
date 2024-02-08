@@ -22,7 +22,8 @@ const {
   getProductsByBestSeller,
   getProductsByTopCategory,
   checkProductPurchase,
-  getProductReview
+  getProductReview,
+  getProductsByTagOnly,
 } = require("../controllers/product");
 const router = express.Router();
 
@@ -52,6 +53,8 @@ router.post("/product/getProducts", getProducts);
 
 router.post("/product/getProductsByTagName", getProductsByTag);
 
+router.post("/product/getProductsByTagOnly", getProductsByTagOnly);
+
 router.post("/product/getProductsBySorting", getProductsBySorting);
 
 router.post("/product/getBestSellerProducts", getProductsByBestSeller);
@@ -66,8 +69,24 @@ router.patch(
   updateProducts
 );
 
-router.post("/product/reviews", requireSignin, userMiddleware, upload.single("image"), createProductReview);
-router.post("/product/user/review", requireSignin, userMiddleware, getProductReview);
-router.get("/checkProductPurchase/:productId", requireSignin, userMiddleware, checkProductPurchase);
+router.post(
+  "/product/reviews",
+  requireSignin,
+  userMiddleware,
+  upload.single("image"),
+  createProductReview
+);
+router.post(
+  "/product/user/review",
+  requireSignin,
+  userMiddleware,
+  getProductReview
+);
+router.get(
+  "/checkProductPurchase/:productId",
+  requireSignin,
+  userMiddleware,
+  checkProductPurchase
+);
 
 module.exports = router;

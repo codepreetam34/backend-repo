@@ -122,7 +122,7 @@ exports.getCategories = async (req, res) => {
       ).length;
 
       return {
-        _id: cat._id, // Include only the necessary properties
+        _id: cat._id, 
         name: cat.name,
         parentId: cat.parentId,
         imageAltText: cat.imageAltText,
@@ -135,16 +135,13 @@ exports.getCategories = async (req, res) => {
 
     const totalProductCount = products.length;
 
-    // Sort the subCategory array by customOrder
-    // subCategoryWithProductCount.sort((a, b) => a.customOrder - b.customOrder);
     res.status(200).json({
       categoryList: categoryWithProductCount,
-      totalProductCount: totalProductCount, // Adding totalProductCount to the response
+      totalProductCount: totalProductCount, 
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-
 };
 
 exports.updateCategories = async (req, res) => {
@@ -264,7 +261,6 @@ exports.deleteCategories = async (req, res) => {
   try {
     const { ids } = req.body.payload;
     const deletedCategories = [];
-
     const response = await Category.findOne({ _id: ids[0]._id });
 
     if (response) {
@@ -281,7 +277,6 @@ exports.deleteCategories = async (req, res) => {
       for (let i = 0; i < ids.length; i++) {
         const deleteCategory = await Category.findOneAndDelete({
           _id: ids[i]._id,
-          createdBy: req.user._id,
         });
         deletedCategories.push(deleteCategory);
       }
@@ -293,7 +288,6 @@ exports.deleteCategories = async (req, res) => {
     } else {
       res.status(400).json({ message: "Something went wrong" });
     }
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
