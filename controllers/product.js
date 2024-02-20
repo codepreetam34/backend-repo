@@ -469,6 +469,7 @@ exports.getProductReview = async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 exports.checkProductPurchase = async (req, res) => {
   try {
     const product = await Product.findById(req.params.productId);
