@@ -20,8 +20,8 @@ const upload = multer({ storage: storage });
 
 // Multer middleware for specific fields
 const uploadField = multer({ storage: storage }).fields([
-  { name: "pdf", maxCount: 2 },
-  { name: "image", maxCount: 10 },
+  { name: "gstCertificate", maxCount: 2 },
+  { name: "aadharCard", maxCount: 10 },
 ]);
 
 // Middleware to check if user is signed in with a valid JWT token
