@@ -112,14 +112,12 @@ exports.updateVendor = async (req, res) => {
     let gstCertificate = {};
     let aadharCard = {};
 
-    console.log("req ", req.files);
-
     if (req.files && req.files["gstCertificate"]) {
       const gstFile = req.files["gstCertificate"][0];
       const gstContent = gstFile.buffer;
       const gstFilename = shortid.generate() + "-" + gstFile.originalname;
       const gstUploadParams = {
-        Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
+        Bucket: "vibezter-spaces",
         Key: gstFilename,
         Body: gstContent,
         ACL: "public-read",
@@ -210,7 +208,7 @@ exports.updateVendor = async (req, res) => {
 // Delete a vendor by ID
 exports.deleteVendor = async (req, res) => {
   try {
-    const vendor = await Vendor.findByIdAndDelete(req.params.id);
+    const vendor = await Vendor.findByIdAndDelete(req.body._id);
     if (!vendor) {
       return res.status(404).json({ message: "Vendor not found" });
     }
