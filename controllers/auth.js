@@ -6,6 +6,7 @@ const shortid = require("shortid");
 const sendEmail = require("../utils/email/sendEmail");
 const otpGenerator = require("otp-generator");
 const crypto = require("crypto");
+const googleOAuth = require("../common-middleware/googleOAuth");
 
 const generateJwtToken = (_id, role) => {
   return jwt.sign({ _id, role }, process.env.JWT_SECRET, {
@@ -433,6 +434,27 @@ exports.getUserData = async (req, res) => {
     return res.status(200).json({ user: user });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+exports.authControllerlogin = async (req, res) => {
+  try {
+    const code = req.body.code;
+    const profile = await googleOAuth.getProfileInfo(code);
+
+    const user = {
+      googleId: profile.sub,
+      name: profile.name,
+      firstName: profile.given_name,
+      lastName: profile.family_name,
+      email: profile.email,
+      profilePic: profile.picture,
+    };
+
+    res.send({ user });
+  } catch (e) {
+    console.log(e);
+    res.status(401).send();
   }
 };
 

@@ -13,6 +13,7 @@ const {
   generateOTP,
   verifyOTP,
   getUserData,
+  authControllerlogin
 } = require("../controllers/auth");
 const {
   validateSignupRequest,
@@ -56,5 +57,7 @@ router.post("/updatePassword", requireSignin, updatePassword);
 router.post("/signout", signout);
 
 router.get("/user", requireSignin, getUserData);
+
+router.post('/google', authControllerlogin);
 
 module.exports = router;
