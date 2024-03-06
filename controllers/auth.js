@@ -47,9 +47,6 @@ exports.requestVerifyEmail = async (req, res) => {
 
 exports.verifyEmailViaOtp = async (req, res) => {
   const { otp, id } = req.body;
-  console.log("OTP from request:", otp);
-  console.log("OTP from locals:", req.app.locals.OTP);
-  //
   // if (parseInt(req.app.locals.OTP) === parseInt(otp)) {
   if (req.app.locals.OTP === undefined) {
     return res.status(400).send({ error: "OTP not set" });

@@ -6,6 +6,8 @@ const {
   getVendorById,
   createVendor,
   updateVendor,
+  vendorSignUp,
+  vendorSignin,
 } = require("../controllers/vendorController");
 const {
   requireSignin,
@@ -32,5 +34,7 @@ router.post(
   updateVendor
 );
 router.post("/vendor/getAll", requireSignin, getAllVendors);
+router.post("/vendor/signUp", requireSignin, vendorSignUp);
+router.post("/vendor/signIn", vendorSignin);
 
 module.exports = router;

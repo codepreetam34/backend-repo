@@ -1,13 +1,26 @@
 const Vendor = require("../models/vendor");
 const { S3 } = require("aws-sdk");
-const shortid = require("shortid"); // Assuming you're using shortid for generating unique filenames
-
+const User = require("../models/user");
+const Token = require("../models/Token.model");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const shortid = require("shortid");
+const sendEmail = require("../utils/email/sendEmail");
+const otpGenerator = require("otp-generator");
+const crypto = require("crypto");
 const s3 = new S3({
   endpoint: "https://vibezter-spaces.blr1.digitaloceanspaces.com",
   accessKeyId: "DO00XDVVVLMUEJCKADRM",
   secretAccessKey: "SIFlABu43WE1DvoOHi87bmZmykG0ECL+6t5+O+qBacU",
   s3ForcePathStyle: true,
 });
+
+const generateJwtToken = (_id, role) => {
+  return jwt.sign({ _id, role }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+};
+
 
 exports.createVendor = async (req, res) => {
   try {
@@ -94,6 +107,144 @@ exports.getAllVendors = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+exports.vendorSignUp = async (req, res) => {
+  try {
+    User.findOne({ email: req.body.email }).exec(async (error, user) => {
+      if (user)
+        if (user.role === "vendor") {
+          return res.status(400).json({
+            error: "User with role 'user' already registered",
+          });
+        }
+
+      const { firstName, lastName, email, password, contactNumber } = req.body;
+
+      const hash_password = await bcrypt.hash(password, 10);
+      const _user = new User({
+        firstName,
+        lastName,
+        contactNumber,
+        email,
+        hash_password,
+        role: "vendor",
+        username: `${firstName}_${shortid.generate()}`,
+      });
+
+      _user.save((error, user) => {
+        if (error) {
+          return res.status(400).json({
+            message: "Something went wrong",
+          });
+        }
+
+        if (user) {
+          req.app.locals.OTP = otpGenerator.generate(6, {
+            lowerCaseAlphabets: false,
+            upperCaseAlphabets: false,
+            specialChars: false,
+          });
+          if (!user) {
+            return res.status(400).json({
+              message:
+                "User not found. Please check your credentials or sign up.",
+            });
+          }
+          const link = `${process.env.CLIENT_URL}/verifyemail?otp=${req.app.locals.OTP}&id=${user._id}`;
+
+          sendEmail(
+            user.email,
+            "Request Verify Email",
+            {
+              name: user.fullName,
+              otp: req.app.locals.OTP,
+              link: link,
+            },
+            "./template/requestVerifyEmail.handlebars"
+          );
+
+          const token = generateJwtToken(user._id, user.role);
+          const {
+            _id,
+            firstName,
+            lastName,
+            email,
+            contactNumber,
+            role,
+            fullName,
+          } = user;
+          return res.status(201).json({
+            token,
+            user: {
+              _id,
+              firstName,
+              lastName,
+              contactNumber,
+              email,
+              role,
+              fullName,
+            },
+            message: "Email Verification Sent",
+          });
+        }
+      });
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.vendorSignin = async (req, res) => {
+  try {
+    
+    const { email, password } = req.body;
+    const user = await User.findOne({ email, role: "vendor" });
+
+    if (
+      !user ||
+      !(await user.authenticate(password)) ||
+      user.role !== "vendor"
+    ) {
+      return res.status(400).json({
+        message: "Invalid credentials. Please check your email and password.",
+      });
+    }
+
+    const token = generateJwtToken(user._id, user.role);
+
+    const {
+      _id,
+      firstName,
+      lastName,
+      role,
+      fullName,
+      gender,
+      dob,
+      contactNumber,
+      profilePicture,
+    } = user;
+
+    res.cookie("token", token, { expiresIn: "7d" });
+
+    return res.status(200).json({
+      token,
+      user: {
+        _id,
+        firstName,
+        lastName,
+        email,
+        role,
+        fullName,
+        gender,
+        dob,
+        contactNumber,
+        profilePicture,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 exports.getVendorById = async (req, res) => {
   try {
@@ -133,7 +284,8 @@ exports.updateVendor = async (req, res) => {
     if (req.files && req.files["aadharCard"]) {
       const aadharCardFile = req.files["aadharCard"][0];
       const aadharCardContent = aadharCardFile.buffer;
-      const aadharCardFilename = shortid.generate() + "-" + aadharCardFile.originalname;
+      const aadharCardFilename =
+        shortid.generate() + "-" + aadharCardFile.originalname;
       const aadharCardUploadParams = {
         Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
         Key: aadharCardFilename,
