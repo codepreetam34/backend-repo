@@ -19,7 +19,7 @@ const tagSchema = mongoose.Schema({
   tagType: { type: String },
   names: { type: Array },
 });
-const productSchema = new mongoose.Schema(
+const vendorProductSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -72,6 +72,9 @@ const productSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    approvedBySuperAdmin: {
+      type: Boolean,
+    },
 
     offer: { type: Number },
 
@@ -96,11 +99,6 @@ const productSchema = new mongoose.Schema(
       ref: "Category",
       required: true,
     },
-    vendorUserId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User', 
-    },
-    
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -112,4 +110,4 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Product", productSchema);
+module.exports = mongoose.model("VendorProduct", vendorProductSchema);

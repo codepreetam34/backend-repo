@@ -62,6 +62,12 @@ const adminMiddleware = (req, res, next) => {
   }
   next();
 };
+const vendorMiddleware = (req, res, next) => {
+  if (req.user.role !== "vendor") {
+    return res.status(400).json({ message: "Vendor access denied" });
+  }
+  next();
+};
 
 // Middleware to check if the user's role is "super-admin"
 const superAdminMiddleware = (req, res, next) => {
@@ -87,6 +93,7 @@ module.exports = {
   adminMiddleware,
   superAdminMiddleware,
   localVariable,
+  vendorMiddleware,
   upload,
   uploadField,
   s3

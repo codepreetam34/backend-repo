@@ -5,6 +5,7 @@ const {
   adminMiddleware,
   upload,
   userMiddleware,
+  vendorMiddleware,
   // uploadS3,
 } = require("../common-middleware");
 
@@ -24,6 +25,8 @@ const {
   checkProductPurchase,
   getProductReview,
   getProductsByTagOnly,
+  createVendorProduct,
+  getVendorProduct
 } = require("../controllers/product");
 const router = express.Router();
 
@@ -33,6 +36,19 @@ router.post(
   adminMiddleware,
   upload.array("productPicture"),
   createProduct
+);
+router.post(
+  "/product/vendor/create",
+  requireSignin,
+  vendorMiddleware,
+  upload.array("productPicture"),
+  createVendorProduct
+);
+router.get(
+  "/product/vendor/get",
+  requireSignin,
+  vendorMiddleware,
+  getVendorProduct
 );
 
 router.get("/products/:slug", getProductsBySlug);

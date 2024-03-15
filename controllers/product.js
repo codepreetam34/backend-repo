@@ -1,4 +1,5 @@
 const Product = require("../models/product");
+const VendorProduct = require("../models/vendorProducts");
 const Order = require("../models/order");
 const Category = require("../models/category");
 let sortBy = require("lodash.sortby");
@@ -122,6 +123,134 @@ exports.createProduct = async (req, res) => {
     }
   } catch (error) {
     return res.status(400).json({ error: error.message });
+  }
+};
+exports.createVendorProduct = async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      category,
+      quantity,
+      pincode,
+      actualPrice,
+      discountPrice,
+      specifications,
+      halfkgprice,
+      onekgprice,
+      twokgprice,
+      deliveryDay,
+      offer,
+      tags,
+    } = req.body;
+
+    let productPictures = [];
+
+    if (req.files) {
+      productPictures = await Promise.all(
+        req.files.map(async (file, index) => {
+          const fileContent = file.buffer;
+          const filename = shortid.generate() + "-" + file.originalname;
+          const uploadParams = {
+            Bucket: "vibezter-spaces", // Replace with your DigitalOcean Spaces bucket name
+            Key: filename,
+            Body: fileContent,
+            ACL: "public-read",
+          };
+
+          // Upload the product picture to DigitalOcean Spaces
+          const uploadedFile = await s3.upload(uploadParams).promise();
+
+          return {
+            img: uploadedFile.Location,
+            imageAltText:
+              (req.body.imageAltText && req.body.imageAltText[index]) || "",
+          };
+        })
+      );
+    }
+
+    const categoryById = await Category.findOne({ _id: category });
+
+    if (categoryById?.name?.toLowerCase() === "cakes") {
+      const product = new VendorProduct({
+        name,
+        slug: slugify(name),
+        actualPrice: actualPrice || halfkgprice || 0,
+        quantity,
+        description,
+        pincode,
+        productPictures,
+        category,
+        offer,
+        discountPrice,
+        deliveryDay,
+        specifications,
+        halfkgprice: halfkgprice || "",
+        onekgprice: onekgprice || "",
+        twokgprice: twokgprice || "",
+        tags: JSON.parse(tags),
+        categoryName: categoryById?.name,
+        createdBy: req.user._id,
+      });
+
+      const savedProduct = await product.save();
+
+      if (savedProduct) {
+        return res.status(201).json({
+          product: savedProduct,
+          files: req.files,
+          message: "Product has been added successfully",
+        });
+      }
+    } else {
+      const product = new VendorProduct({
+        name,
+        slug: slugify(name),
+        actualPrice,
+        quantity,
+        description,
+        pincode,
+        discountPrice,
+        deliveryDay,
+        offer,
+        productPictures,
+        specifications,
+        category,
+        tags: JSON.parse(tags),
+        categoryName: categoryById?.name,
+        createdBy: req.user._id,
+      });
+
+      const savedProduct = await product.save();
+
+      if (savedProduct) {
+        return res.status(201).json({
+          product: savedProduct,
+          files: req.files,
+          message: "Product has been added successfully",
+        });
+      }
+    }
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+};
+exports.getVendorProduct = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const product = await VendorProduct.find({ createdBy: userId }).sort({ _id: -1 });
+    const products = await createProducts(product);
+
+    if (products) {
+      res.status(200).json({
+        products,
+      });
+    } else {
+      return res.status(400).json({ error: error.message });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 
