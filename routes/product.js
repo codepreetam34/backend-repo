@@ -1,5 +1,6 @@
 const express = require("express");
 //const {  } = require('../controller/category');
+
 const {
   requireSignin,
   adminMiddleware,
@@ -26,7 +27,9 @@ const {
   getProductReview,
   getProductsByTagOnly,
   createVendorProduct,
-  getVendorProduct
+  getVendorProduct,
+  getAdminVendorProductApproval,
+  approvedBySuperAdmin,
 } = require("../controllers/product");
 const router = express.Router();
 
@@ -37,6 +40,7 @@ router.post(
   upload.array("productPicture"),
   createProduct
 );
+
 router.post(
   "/product/vendor/create",
   requireSignin,
@@ -44,16 +48,25 @@ router.post(
   upload.array("productPicture"),
   createVendorProduct
 );
+
+router.get("/product/vendor/get", requireSignin, getVendorProduct);
+
 router.get(
-  "/product/vendor/get",
+  "/product/vendor/getAdminApproval",
   requireSignin,
-  vendorMiddleware,
-  getVendorProduct
+  getAdminVendorProductApproval
+);
+
+router.patch(
+  "/product/vendor/approvedBySuperAdmin",
+  requireSignin,
+  approvedBySuperAdmin
 );
 
 router.get("/products/:slug", getProductsBySlug);
 
 // router.get('/category/getcategory', getCategories);
+
 router.post("/product/getProducts/categoryid", getProductsByCategoryId);
 
 router.get("/product/:productId", getProductDetailsById);
@@ -92,12 +105,14 @@ router.post(
   upload.single("image"),
   createProductReview
 );
+
 router.post(
   "/product/user/review",
   requireSignin,
   userMiddleware,
   getProductReview
 );
+
 router.get(
   "/checkProductPurchase/:productId",
   requireSignin,

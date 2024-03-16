@@ -1,6 +1,7 @@
 const Product = require("../models/product");
 const VendorProduct = require("../models/vendorProducts");
 const Order = require("../models/order");
+const User = require("../models/user");
 const Category = require("../models/category");
 let sortBy = require("lodash.sortby");
 const { S3 } = require("aws-sdk");
@@ -239,15 +240,54 @@ exports.createVendorProduct = async (req, res) => {
 exports.getVendorProduct = async (req, res) => {
   try {
     const userId = req.user._id;
-    const product = await VendorProduct.find({ createdBy: userId }).sort({ _id: -1 });
-    const products = await createProducts(product);
+    // Assuming you have a User model with fields `firstName` and `lastName
+    const products = await VendorProduct.find({ createdBy: userId }).sort({
+      _id: -1,
+    });
 
-    if (products) {
-      res.status(200).json({
-        products,
-      });
+    res.status(200).json({ products });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+exports.getAdminVendorProductApproval = async (req, res) => {
+  try {
+    const products = await VendorProduct.find({}).sort({ _id: -1 });
+
+    // Fetch user information for each product
+    const productsWithVendorName = await Promise.all(
+      products.map(async (product) => {
+        const userId = product.createdBy;
+        const user = await User.findById(userId);
+        if (user) {
+          product = {
+            ...product.toObject(),
+            vendorName: `${user.firstName} ${user.lastName}`,
+          };
+        }
+        return product;
+      })
+    );
+
+    res.status(200).json({ products: productsWithVendorName });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.approvedBySuperAdmin = async (req, res) => {
+  try {
+    const productId = req.body.productId;
+    const updatedProduct = await VendorProduct.findOneAndUpdate(
+      { _id: productId },
+      { approvedBySuperAdmin: true },
+      { new: true }
+    );
+
+    if (updatedProduct) {
+      res.status(200).json(updatedProduct);
     } else {
-      return res.status(400).json({ error: error.message });
+      res.status(404).json({ error: "Product not found" });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
