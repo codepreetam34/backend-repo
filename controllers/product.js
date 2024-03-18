@@ -187,7 +187,7 @@ exports.createVendorProduct = async (req, res) => {
         discountPrice,
         deliveryDay,
         specifications,
-        approvedBySuperAdmin:false,
+        approvedBySuperAdmin: false,
         halfkgprice: halfkgprice || "",
         onekgprice: onekgprice || "",
         twokgprice: twokgprice || "",
@@ -218,7 +218,7 @@ exports.createVendorProduct = async (req, res) => {
         offer,
         productPictures,
         specifications,
-        approvedBySuperAdmin:false,
+        approvedBySuperAdmin: false,
         category,
         tags: JSON.parse(tags),
         categoryName: categoryById?.name,
@@ -301,7 +301,9 @@ exports.approvedBySuperAdmin = async (req, res) => {
     );
 
     if (updatedProduct) {
-      const newProduct = new Product(updatedProduct);
+      const { _id, approvedBySuperAdmin, ...productData } =
+        updatedProduct.toObject();
+      const newProduct = new Product(productData);
       await newProduct.save();
       res.status(200).json(updatedProduct);
     } else {
