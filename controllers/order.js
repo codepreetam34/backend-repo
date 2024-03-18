@@ -66,7 +66,6 @@ exports.getOrders = async (req, res) => {
         return res.status(404).json({ error: "Address not found" });
       }
 
-      // Attach address to each order
       const ordersWithAddress = orders.map((order) => {
         const matchingAddress = address.address.find(
           (adr) => adr._id.toString() === order.addressId.toString()
@@ -93,23 +92,20 @@ exports.getOrders = async (req, res) => {
 
 exports.getAllOrders = async (req, res) => {
   try {
-    // Use the `populate` method to retrieve user details for each order
     const allOrders = await Order.find()
       .populate({
         path: "user",
-        select: "firstName lastName email", // Specify the user fields you want to retrieve
+        select: "firstName lastName email", 
       })
       .populate("items.productId", "_id name productPictures")
       .exec();
 
-    // Organize the response by grouping orders under each user with full name
     const ordersByUser = {};
 
     for (const order of allOrders) {
-      const { user, addressId, ...orderDetails } = order._doc; // Extract user details and order details
+      const { user, addressId, ...orderDetails } = order._doc; 
       const userId = user._id.toString();
 
-      // Create an entry for the user if it doesn't exist
       if (!ordersByUser[userId]) {
         ordersByUser[userId] = {
           user: {
@@ -129,12 +125,10 @@ exports.getAllOrders = async (req, res) => {
           return res.status(404).json({ error: "Address not found" });
         }
 
-        // Attach address to each order
         const matchingAddress = address.address.find(
           (adr) => adr._id.toString() === addressId.toString()
         );
 
-        // Add the order details and address to the user's orders
         ordersByUser[userId].orders.push({
           ...orderDetails,
           address: matchingAddress || null,
@@ -145,7 +139,6 @@ exports.getAllOrders = async (req, res) => {
       }
     }
 
-    // Convert the object to an array for the final response
     const finalResponse = Object.values(ordersByUser);
 
     res.status(200).json({

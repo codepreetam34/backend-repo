@@ -72,9 +72,11 @@ const vendorProductSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    
     approvedBySuperAdmin: {
       type: Boolean,
-    },
+      default: false
+    },    
 
     offer: { type: Number },
 

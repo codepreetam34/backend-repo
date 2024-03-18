@@ -123,8 +123,8 @@ exports.deleteBannerById = async (req, res) => {
 };
 
 exports.getBanners = async (req, res) => {
-  const limit = parseInt(req.query.limit) || 10; // Set a default of 10 items per page
-  const page = parseInt(req.query.page) || 1; // Set a default page number of 1
+  const limit = parseInt(req.query.limit) || 10; 
+  const page = parseInt(req.query.page) || 1; 
 
   try {
     const homepageBanner = await Banner.find({})

@@ -187,6 +187,7 @@ exports.createVendorProduct = async (req, res) => {
         discountPrice,
         deliveryDay,
         specifications,
+        approvedBySuperAdmin:false,
         halfkgprice: halfkgprice || "",
         onekgprice: onekgprice || "",
         twokgprice: twokgprice || "",
@@ -217,6 +218,7 @@ exports.createVendorProduct = async (req, res) => {
         offer,
         productPictures,
         specifications,
+        approvedBySuperAdmin:false,
         category,
         tags: JSON.parse(tags),
         categoryName: categoryById?.name,
@@ -253,19 +255,33 @@ exports.getVendorProduct = async (req, res) => {
 exports.getAdminVendorProductApproval = async (req, res) => {
   try {
     const products = await VendorProduct.find({}).sort({ _id: -1 });
+    const falseProducts = [];
+    const trueProducts = [];
+    for (const product of products) {
+      if (product.approvedBySuperAdmin === false) {
+        falseProducts.push(product);
+      } else {
+        trueProducts.push(product);
+      }
+    }
 
-    // Fetch user information for each product
+    const rearrangedProducts = [...falseProducts, ...trueProducts];
+
     const productsWithVendorName = await Promise.all(
-      products.map(async (product) => {
+      rearrangedProducts.map(async (product) => {
         const userId = product.createdBy;
         const user = await User.findById(userId);
         if (user) {
-          product = {
+          return {
             ...product.toObject(),
             vendorName: `${user.firstName} ${user.lastName}`,
           };
+        } else {
+          return {
+            ...product.toObject(),
+            vendorName: "Unknown",
+          };
         }
-        return product;
       })
     );
 
@@ -285,6 +301,8 @@ exports.approvedBySuperAdmin = async (req, res) => {
     );
 
     if (updatedProduct) {
+      const newProduct = new Product(updatedProduct);
+      await newProduct.save();
       res.status(200).json(updatedProduct);
     } else {
       res.status(404).json({ error: "Product not found" });
@@ -931,7 +949,6 @@ exports.getProductsBySorting = async (req, res) => {
   }
 };
 
-// getProductsByCategoryId
 exports.getProductsByCategoryId = async (req, res) => {
   try {
     const { id, pincodeData } = req.body;
@@ -976,7 +993,6 @@ exports.getProductsByCategoryId = async (req, res) => {
   }
 };
 
-// getProductsByTag
 exports.getProductsByTag = async (req, res) => {
   try {
     const { categoryId, tagName, sort, pincodeData } = req.body;

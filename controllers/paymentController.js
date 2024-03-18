@@ -11,7 +11,7 @@ const razorpay = new Razorpay({
 exports.createOrder = async (req, res) => {
   try {
     const options = {
-      amount: req.body.totalAmount * 100, // Amount in paise
+      amount: req.body.totalAmount * 100, 
       currency: "INR",
     };
 
@@ -26,16 +26,15 @@ exports.createOrder = async (req, res) => {
 exports.paytmInitiateTransaction = async (req, res) => {
   try {
     const orderId = "Ord_" + Date.now();
-    const amount = req.body.amount || "1.00"; // Default amount if not provided
+    const amount = req.body.amount || "1.00"; 
 
-    // Construct Paytm API request parameters
     const paytmParams = {
       body: {
         requestType: "Payment",
-        mid: paytmConfig.MID, // Your Paytm Merchant ID
-        websiteName: paytmConfig.WEBSITE, // Your Paytm Website Name
+        mid: paytmConfig.MID, 
+        websiteName: paytmConfig.WEBSITE, 
         orderId: orderId,
-        callbackUrl: paytmConfig.CALLBACK_URL, // Your callback URL
+        callbackUrl: paytmConfig.CALLBACK_URL, 
         txnAmount: {
           value: amount,
           currency: "INR",
@@ -46,15 +45,11 @@ exports.paytmInitiateTransaction = async (req, res) => {
       },
     };
 
-    // Generate Paytm signature
     const checksum = await generatePaytmSignature(paytmParams.body);
 
-    // Include the signature in the request
     paytmParams.head = {
       signature: checksum,
     };
-    console.log("checksum ", checksum);
-    // Make the API request to initiate the Paytm transaction
     const response = await axios.post(
       `https://${paytmConfig.ENV}/theia/api/v1/initiateTransaction?mid=${paytmConfig.MID}&orderId=${orderId}`,
       paytmParams,
@@ -65,13 +60,9 @@ exports.paytmInitiateTransaction = async (req, res) => {
       }
     );
 
-    console.log("Paytm API Response:", response.data);
-    // Check if the response contains the expected structure
     if (response.data && response.data.body && response.data.body.txnToken) {
-      // Extract the payment URL from the response
       const paymentUrl = response.data.body.txnToken;
 
-      // Send the payment URL to the client
       const data = {
         env: paytmConfig.ENV,
         mid: paytmConfig.MID,
@@ -94,9 +85,7 @@ exports.paytmInitiateTransaction = async (req, res) => {
 exports.paytmCallBack = async (req, res) => {
   try {
     const postbodyjson = req.body;
-    console.log("postbodyjson 1", postbodyjson);
     const checksum = postbodyjson.CHECKSUMHASH;
-    console.log("checksum 2 ", checksum);
     delete postbodyjson["CHECKSUMHASH"];
 
     const verifyChecksum = PaytmChecksum.verifySignature(
@@ -125,10 +114,7 @@ exports.paytmCallBack = async (req, res) => {
 
 async function generatePaytmSignature(body) {
   try {
-    // Convert the JSON body to a string
     const requestBody = JSON.stringify(body);
-
-    // Generate the Paytm signature using the PaytmChecksum class
     const signature = await PaytmChecksum.generateSignature(
       requestBody,
       paytmConfig.MKEY
