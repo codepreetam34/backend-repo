@@ -30,6 +30,7 @@ const {
   getVendorProduct,
   getAdminVendorProductApproval,
   approvedBySuperAdmin,
+  deleteVendorProductById,
 } = require("../controllers/product");
 const router = express.Router();
 
@@ -76,6 +77,12 @@ router.delete(
   requireSignin,
   adminMiddleware,
   deleteProductById
+);
+router.delete(
+  "/product/deleteVendorProductById/:productId",
+  requireSignin,
+  adminMiddleware,
+  deleteVendorProductById
 );
 
 router.post("/product/getProducts", getProducts);

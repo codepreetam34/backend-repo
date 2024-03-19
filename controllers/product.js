@@ -242,11 +242,9 @@ exports.createVendorProduct = async (req, res) => {
 exports.getVendorProduct = async (req, res) => {
   try {
     const userId = req.user._id;
-    // Assuming you have a User model with fields `firstName` and `lastName
     const products = await VendorProduct.find({ createdBy: userId }).sort({
       _id: -1,
     });
-
     res.status(200).json({ products });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -305,7 +303,10 @@ exports.approvedBySuperAdmin = async (req, res) => {
         updatedProduct.toObject();
       const newProduct = new Product(productData);
       await newProduct.save();
-      res.status(200).json(updatedProduct);
+      res.status(200).json({
+        updatedProduct,
+        message: "Product Approval Granted by Super Admin",
+      });
     } else {
       res.status(404).json({ error: "Product not found" });
     }
@@ -1128,5 +1129,52 @@ exports.getProductsByTagOnly = async (req, res) => {
     }
   } catch (err) {
     return res.status(400).json({ error: "Failed to fetch products" });
+  }
+};
+
+
+exports.deleteVendorProductById = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    if (productId) {
+      const response = await VendorProduct.findOne({ _id: productId });
+
+      if (response) {
+        response.productPictures.map(async (banner) => {
+          if (banner.img) {
+            const key = banner.img.split("/").pop();
+            const deleteParams = {
+              Bucket: "vibezter-spaces",
+              Key: key,
+            };
+
+            const resDelete = await s3.deleteObject(deleteParams).promise();
+
+            if (resDelete) {
+              VendorProduct.deleteOne({ _id: productId }).exec((error, result) => {
+                if (error) return res.status(400).json({ error });
+                if (result) {
+                  res
+                    .status(202)
+                    .json({ message: "Product has been deleted successfully" });
+                }
+              });
+            } else {
+              return res
+                .status(400)
+                .json({ error: "Delete operation failed try again" });
+            }
+          }
+        });
+      } else {
+        return res
+          .status(400)
+          .json({ error: "Delete operation failed try again" });
+      }
+    } else {
+      res.status(400).json({ error: "Params required" });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
