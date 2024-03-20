@@ -264,7 +264,7 @@ exports.getAdminVendorProductApproval = async (req, res) => {
     }
 
     const rearrangedProducts = [...falseProducts, ...trueProducts];
-
+ 
     const productsWithVendorName = await Promise.all(
       rearrangedProducts.map(async (product) => {
         const userId = product.createdBy;
@@ -1131,7 +1131,6 @@ exports.getProductsByTagOnly = async (req, res) => {
     return res.status(400).json({ error: "Failed to fetch products" });
   }
 };
-
 
 exports.deleteVendorProductById = async (req, res) => {
   try {
