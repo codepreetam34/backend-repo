@@ -12,6 +12,7 @@ const {
 const {
   requireSignin,
   adminMiddleware,
+  superAdminMiddleware,
   uploadField,
   upload,
 
@@ -26,7 +27,7 @@ router.post(
   createVendor
 );
 router.post("/vendor/getByid",requireSignin, getVendorById);
-router.post("/vendor/delete", requireSignin, adminMiddleware, deleteVendor);
+router.post("/vendor/delete", requireSignin, superAdminMiddleware, deleteVendor);
 router.post(
   "/vendor/update",
   requireSignin,
@@ -34,7 +35,7 @@ router.post(
   updateVendor
 );
 router.post("/vendor/getAll", requireSignin, getAllVendors);
-router.post("/vendor/signUp", requireSignin, vendorSignUp);
+router.post("/vendor/signUp",  vendorSignUp);
 router.post("/vendor/signIn", vendorSignin);
 
 module.exports = router;
