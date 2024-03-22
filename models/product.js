@@ -72,6 +72,10 @@ const productSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    vendorName: {
+      type: String,
+      trim: true,
+    },
 
     offer: { type: Number },
 
@@ -96,7 +100,7 @@ const productSchema = new mongoose.Schema(
       ref: "Category",
       required: true,
     },
-    vendorUserId: {
+    vendorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User', 
     },

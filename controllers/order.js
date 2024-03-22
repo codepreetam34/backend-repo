@@ -49,7 +49,7 @@ exports.getOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user._id })
       .select("_id paymentStatus paymentType orderStatus items addressId")
-      .populate("items.productId", "_id name productPictures")
+      .populate("items.productId", "_id name productPictures vendorName")
       .sort({ _id: -1 })
       .exec();
 
@@ -95,15 +95,15 @@ exports.getAllOrders = async (req, res) => {
     const allOrders = await Order.find()
       .populate({
         path: "user",
-        select: "firstName lastName email", 
+        select: "firstName lastName email",
       })
-      .populate("items.productId", "_id name productPictures")
+      .populate("items.productId", "_id name productPictures vendorName")
       .exec();
 
     const ordersByUser = {};
 
     for (const order of allOrders) {
-      const { user, addressId, ...orderDetails } = order._doc; 
+      const { user, addressId, ...orderDetails } = order._doc;
       const userId = user._id.toString();
 
       if (!ordersByUser[userId]) {
@@ -176,3 +176,54 @@ exports.getOrderById = (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+exports.getVendorOrders = async (req, res) => {
+  try {
+    const vendorId = req.user._id;
+    const orders = await Order.find({ user: req.user._id })
+      .select("_id paymentStatus paymentType orderStatus items addressId")
+      .populate({
+        path: "items.productId",
+        select: "_id name productPictures vendorName vendorId",
+        match: { vendorId: vendorId } // Filter by vendorId
+      })
+      .sort({ _id: -1 })
+      .exec();
+
+    if (!orders || orders.length === 0) {
+      return res.status(404).json({ error: "No orders found" });
+    }
+
+    try {
+      const address = await Address.findOne({
+        user: req.user._id,
+      });
+
+      if (!address || !address.address) {
+        return res.status(404).json({ error: "Address not found" });
+      }
+
+      const ordersWithAddress = orders.map((order) => {
+        const matchingAddress = address.address.find(
+          (adr) => adr._id.toString() === order.addressId.toString()
+        );
+
+        return {
+          ...order._doc,
+          address: matchingAddress || null,
+        };
+      });
+
+      res.status(200).json({
+        orders: ordersWithAddress,
+      });
+    } catch (addressError) {
+      console.error(addressError);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  } catch (catchError) {
+    console.error(catchError);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+

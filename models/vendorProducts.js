@@ -72,11 +72,16 @@ const vendorProductSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    
+
+    vendorName: {
+      type: String,
+      trim: true,
+    },
+
     approvedBySuperAdmin: {
       type: Boolean,
-      default: false
-    },    
+      default: false,
+    },
 
     offer: { type: Number },
 

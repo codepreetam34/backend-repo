@@ -21,7 +21,6 @@ const generateJwtToken = (_id, role) => {
   });
 };
 
-
 exports.createVendor = async (req, res) => {
   try {
     const {
@@ -109,84 +108,79 @@ exports.getAllVendors = async (req, res) => {
 };
 exports.vendorSignUp = async (req, res) => {
   try {
-    User.findOne({ email: req.body.email }).exec(async (error, user) => {
-      if (user)
-        if (user.role === "vendor") {
-          return res.status(400).json({
-            error: "User with role 'user' already registered",
-          });
-        }
+    // Check if user with provided email already exists
+    const existingUser = await User.findOne({ email: req.body.email });
 
-      const { firstName, lastName, email, password, contactNumber } = req.body;
-
-      const hash_password = await bcrypt.hash(password, 10);
-      const _user = new User({
-        firstName,
-        lastName,
-        contactNumber,
-        email,
-        hash_password,
-        role: "vendor",
-        username: `${firstName}_${shortid.generate()}`,
+    if (existingUser && existingUser.role === "vendor") {
+      return res.status(400).json({
+        message: "User with this email already exists",
       });
+    }
 
-      _user.save((error, user) => {
-        if (error) {
-          return res.status(400).json({
-            message: "Something went wrong",
-          });
-        }
+    // Proceed with user creation
+    const { firstName, lastName, email, password, contactNumber } = req.body;
 
-        if (user) {
-          req.app.locals.OTP = otpGenerator.generate(6, {
-            lowerCaseAlphabets: false,
-            upperCaseAlphabets: false,
-            specialChars: false,
-          });
-          if (!user) {
-            return res.status(400).json({
-              message:
-                "User not found. Please check your credentials or sign up.",
-            });
-          }
-          const link = `${process.env.CLIENT_URL}/verifyemail?otp=${req.app.locals.OTP}&id=${user._id}`;
+    const hash_password = await bcrypt.hash(password, 10);
+    const _user = new User({
+      firstName,
+      lastName,
+      contactNumber,
+      email,
+      hash_password,
+      role: "vendor",
+      username: `${firstName}_${shortid.generate()}`,
+    });
 
-          sendEmail(
-            user.email,
-            "Request Verify Email",
-            {
-              name: user.fullName,
-              otp: req.app.locals.OTP,
-              link: link,
-            },
-            "./template/requestVerifyEmail.handlebars"
-          );
+    _user.save((error, user) => {
+      if (error) {
+        return res.status(400).json({
+          message: "Something went wrong",
+        });
+      }
 
-          const token = generateJwtToken(user._id, user.role);
-          const {
+      if (user) {
+        req.app.locals.OTP = otpGenerator.generate(6, {
+          lowerCaseAlphabets: false,
+          upperCaseAlphabets: false,
+          specialChars: false,
+        });
+        const link = `${process.env.CLIENT_URL}/verifyemail?otp=${req.app.locals.OTP}&id=${user._id}`;
+
+        sendEmail(
+          user.email,
+          "Request Verify Email",
+          {
+            name: user.fullName,
+            otp: req.app.locals.OTP,
+            link: link,
+          },
+          "./template/requestVerifyEmail.handlebars"
+        );
+
+        const token = generateJwtToken(user._id, user.role);
+        const {
+          _id,
+          firstName,
+          lastName,
+          email,
+          contactNumber,
+          role,
+          fullName,
+        } = user;
+        return res.status(201).json({
+          token,
+          user: {
             _id,
             firstName,
             lastName,
-            email,
             contactNumber,
+            email,
             role,
             fullName,
-          } = user;
-          return res.status(201).json({
-            token,
-            user: {
-              _id,
-              firstName,
-              lastName,
-              contactNumber,
-              email,
-              role,
-              fullName,
-            },
-            message: "Email Verification Sent",
-          });
-        }
-      });
+          },
+          message: "Email Verification Sent",
+        });
+      }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -195,7 +189,6 @@ exports.vendorSignUp = async (req, res) => {
 
 exports.vendorSignin = async (req, res) => {
   try {
-    
     const { email, password } = req.body;
     const user = await User.findOne({ email, role: "vendor" });
 

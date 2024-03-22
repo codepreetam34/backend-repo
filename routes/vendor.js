@@ -15,7 +15,6 @@ const {
   superAdminMiddleware,
   uploadField,
   upload,
-
 } = require("../common-middleware");
 router.post(
   "/vendor/create",
@@ -27,7 +26,7 @@ router.post(
   createVendor
 );
 router.post("/vendor/getByid",requireSignin, getVendorById);
-router.post("/vendor/delete", requireSignin, superAdminMiddleware, deleteVendor);
+router.post("/vendor/delete", requireSignin, deleteVendor);
 router.post(
   "/vendor/update",
   requireSignin,

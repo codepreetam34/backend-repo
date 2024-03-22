@@ -8,6 +8,7 @@ const { S3 } = require("aws-sdk");
 const shortid = require("shortid");
 const slugify = require("slugify");
 
+
 // Initialize AWS S3
 const s3 = new S3({
   endpoint: "https://vibezter-spaces.blr1.digitaloceanspaces.com",
@@ -15,6 +16,7 @@ const s3 = new S3({
   secretAccessKey: "SIFlABu43WE1DvoOHi87bmZmykG0ECL+6t5+O+qBacU",
   s3ForcePathStyle: true,
 });
+
 exports.createProduct = async (req, res) => {
   try {
     const {
@@ -126,6 +128,7 @@ exports.createProduct = async (req, res) => {
     return res.status(400).json({ error: error.message });
   }
 };
+
 exports.createVendorProduct = async (req, res) => {
   try {
     const {
@@ -144,7 +147,10 @@ exports.createVendorProduct = async (req, res) => {
       offer,
       tags,
     } = req.body;
-
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    const vendorName = `${user.firstName} ${user.lastName}`;
+    console.log("vendor name ", vendorName);
     let productPictures = [];
 
     if (req.files) {
@@ -180,6 +186,7 @@ exports.createVendorProduct = async (req, res) => {
         actualPrice: actualPrice || halfkgprice || 0,
         quantity,
         description,
+        vendorName,
         pincode,
         productPictures,
         category,
@@ -216,6 +223,7 @@ exports.createVendorProduct = async (req, res) => {
         discountPrice,
         deliveryDay,
         offer,
+        vendorName,
         productPictures,
         specifications,
         approvedBySuperAdmin: false,
@@ -239,6 +247,7 @@ exports.createVendorProduct = async (req, res) => {
     return res.status(400).json({ error: error.message });
   }
 };
+
 exports.getVendorProduct = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -250,6 +259,7 @@ exports.getVendorProduct = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 exports.getAdminVendorProductApproval = async (req, res) => {
   try {
     const products = await VendorProduct.find({}).sort({ _id: -1 });
@@ -264,7 +274,7 @@ exports.getAdminVendorProductApproval = async (req, res) => {
     }
 
     const rearrangedProducts = [...falseProducts, ...trueProducts];
- 
+
     const productsWithVendorName = await Promise.all(
       rearrangedProducts.map(async (product) => {
         const userId = product.createdBy;
@@ -301,7 +311,11 @@ exports.approvedBySuperAdmin = async (req, res) => {
     if (updatedProduct) {
       const { _id, approvedBySuperAdmin, ...productData } =
         updatedProduct.toObject();
+      const vendorId = updatedProduct._id;
+      productData.vendorId = vendorId;
+      console.log("vendorId ", vendorId);
       const newProduct = new Product(productData);
+      console.log("new product ", newProduct);
       await newProduct.save();
       res.status(200).json({
         updatedProduct,
@@ -496,6 +510,7 @@ async function createProducts(products) {
         onekgprice: prod.onekgprice,
         twokgprice: prod.twokgprice,
         categoryName: categoryName,
+        vendorId: prod.vendorId,
       });
     } else {
       productList.push({
@@ -517,6 +532,7 @@ async function createProducts(products) {
         deliveryDay: prod.deliveryDay,
         category: prod.category,
         categoryName: categoryName,
+        vendorId: prod.vendorId,
       });
     }
   }
@@ -1150,14 +1166,16 @@ exports.deleteVendorProductById = async (req, res) => {
             const resDelete = await s3.deleteObject(deleteParams).promise();
 
             if (resDelete) {
-              VendorProduct.deleteOne({ _id: productId }).exec((error, result) => {
-                if (error) return res.status(400).json({ error });
-                if (result) {
-                  res
-                    .status(202)
-                    .json({ message: "Product has been deleted successfully" });
+              VendorProduct.deleteOne({ _id: productId }).exec(
+                (error, result) => {
+                  if (error) return res.status(400).json({ error });
+                  if (result) {
+                    res.status(202).json({
+                      message: "Product has been deleted successfully",
+                    });
+                  }
                 }
-              });
+              );
             } else {
               return res
                 .status(400)

@@ -32,6 +32,7 @@ const {
   approvedBySuperAdmin,
   deleteVendorProductById,
 } = require("../controllers/product");
+
 const router = express.Router();
 
 router.post(
@@ -78,6 +79,7 @@ router.delete(
   adminMiddleware,
   deleteProductById
 );
+
 router.delete(
   "/product/deleteVendorProductById/:productId",
   requireSignin,
