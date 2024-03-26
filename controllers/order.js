@@ -180,12 +180,16 @@ exports.getOrderById = (req, res) => {
 exports.getVendorOrders = async (req, res) => {
   try {
     const vendorId = req.user._id;
-    const orders = await Order.find({ user: req.user._id })
+    const orders = await Order.find({})
       .select("_id paymentStatus paymentType orderStatus items addressId")
       .populate({
         path: "items.productId",
         select: "_id name productPictures vendorName vendorId",
-        match: { vendorId: vendorId } // Filter by vendorId
+        match: { vendorId: vendorId }, 
+      })
+      .populate({
+        path: "addressId",
+        select: "-createdAt -updatedAt", 
       })
       .sort({ _id: -1 })
       .exec();
@@ -194,36 +198,10 @@ exports.getVendorOrders = async (req, res) => {
       return res.status(404).json({ error: "No orders found" });
     }
 
-    try {
-      const address = await Address.findOne({
-        user: req.user._id,
-      });
-
-      if (!address || !address.address) {
-        return res.status(404).json({ error: "Address not found" });
-      }
-
-      const ordersWithAddress = orders.map((order) => {
-        const matchingAddress = address.address.find(
-          (adr) => adr._id.toString() === order.addressId.toString()
-        );
-
-        return {
-          ...order._doc,
-          address: matchingAddress || null,
-        };
-      });
-
-      res.status(200).json({
-        orders: ordersWithAddress,
-      });
-    } catch (addressError) {
-      console.error(addressError);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  } catch (catchError) {
-    console.error(catchError);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(200).json({
+      orders,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
-

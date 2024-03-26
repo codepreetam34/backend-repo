@@ -8,7 +8,6 @@ const { S3 } = require("aws-sdk");
 const shortid = require("shortid");
 const slugify = require("slugify");
 
-
 // Initialize AWS S3
 const s3 = new S3({
   endpoint: "https://vibezter-spaces.blr1.digitaloceanspaces.com",
@@ -313,9 +312,7 @@ exports.approvedBySuperAdmin = async (req, res) => {
         updatedProduct.toObject();
       const vendorId = updatedProduct._id;
       productData.vendorId = vendorId;
-      console.log("vendorId ", vendorId);
       const newProduct = new Product(productData);
-      console.log("new product ", newProduct);
       await newProduct.save();
       res.status(200).json({
         updatedProduct,
